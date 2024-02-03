@@ -123,29 +123,29 @@ func TestGetAccHandler(t *testing.T) {
 	}
 }
 
-// func TestApproveAccHandler(t *testing.T) {
-// 	// accID follows the existing acc with pending status in record_db for testing approval
-// 	accID := "2004"
+func TestApproveAccHandler(t *testing.T) {
+	// accID follows the existing acc with pending status in record_db for testing approval
+	accID := "2004"
 
-// 	req, err := http.NewRequest("POST", fmt.Sprintf("/api/v1/accounts/approve?accID=%s", accID), nil)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	req, err := http.NewRequest("POST", fmt.Sprintf("/api/v1/accounts/approve?accID=%s", accID), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// 	rr := httptest.NewRecorder()
+	rr := httptest.NewRecorder()
 
-// 	ApproveAccHandler(rr, req)
+	ApproveAccHandler(rr, req)
 
-// 	if status := rr.Code; status != http.StatusOK {
-// 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
-// 	}
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
 
-// 	// Check the response body
-// 	expected := "Account approved successfully\n"
-// 	if rr.Body.String() != expected {
-// 		t.Errorf("Handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
-// 	}
-// }
+	// Check the response body
+	expected := "Account approved successfully\n"
+	if rr.Body.String() != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
+	}
+}
 
 // func TestAdminCreateAccHandler(t *testing.T) {
 // 	//dB()
