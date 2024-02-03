@@ -1,156 +1,67 @@
 #Trigger when there is a push to main
 name: Continuous Integration
-
 on:
-  pull_request: 
-   types: 
-    - merged
-    - closed
-   
   push:
-    branches:
-      - main
-    
+  
 jobs:
   # Set up necessary installs
-  Build_SetUp:
+  Build_SetUp_and_TDD:
     name: Build SetUp
-    uses: ./.github/workflows/BuildingSetUp.yml
-
-  # Reference to Test Cases in repository
-  Testing:
-    name: Run Test Cases
-    needs: Build_SetUp
     runs-on: ubuntu-latest
     steps:
+    - name: Set Up Go
+      uses: actions/setup-go@v5  # Setup Go after checkout
+      with:
+        go-version: '1.21.x'
+        cache-dependency-path: subdir/go.sum
+
     # [Edit] Retrieving from Development Repository
     - name: Checkout Development
       uses: actions/checkout@v4
-      with:
-        fetch: --depth=1 # Reduces clone size
-        repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Development
+      
+    - name: Install dependencies
+      run: |
+        go mod download
 
-    # [Edit] Retrieving from Testing Repository
-    - name: Checkout Testing
-      uses: actions/checkout@v4
+    - name: Run TDD Test
+      uses: robherley/go-test-action@v0.1.0
+
+    - name: Checkout Test Repo
+      uses: actions/checkout@v2
+      env:
+        BROWSER: chrome
       with:
-        fetch: --depth=1 # Reduces clone size
         repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Testing
+        
+    - name: Set up chromedriver
+      uses: browser-actions/setup-chrome@latest
+    - run: chrome --version
 
-    # [Edit] Test Cases
-    - name: Use Source Folder
+    - name: Run BDD tests
+      uses: joonvena/robotframework-docker-action@v1.0
+      with:
+        robot_tests_dir: TestCases
+
+    - name: Upload BDD test report
+      uses: actions/upload-artifact@v1
       if: always()
-      run: go get -v -t -d ./microservices
-
-    - name: Use Test Folder
-      run: go test -v ./tdd -coverageprofile=report.out
-
-    - name: Upload Coverage Report
-      uses: codecov/codec-actions@v3
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
+        name: reports
+        path: reports
 
-    # Create Issue for Failed Workflow
-    - if: ${{ failure() }}
-      name: Create Issue on Failed workflow
-      uses: dacbd/create-issue-action@main
-      with:
-        token: ${{ github.token }}
-        title: Issue - `${{ github.workflow }}` failed.
-        body: |
-          [Failed Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          [Codebase](https://github.com/${{ github.repository }}/tree/${{ github.sha }})
-          Workflow name - `${{ github.workflow }}`
-          Job -           `${{ github.job }}`
-          status -        `${{ job.status }}`
-          assignees: `${{ github.actor }}`
-        assignees: lacsadoshaniahsantiago, koayyiting
-    
-    # [Edit] Check tdd directory
-    - name: Display tdd directory and content
-      run: |
-        ls -la tdd          # List contents
-        cat tdd/report.out  # Print contents of report.out
-
-    # [Edit] Create testresults directory and move test results in new directory
-    - name: Create Test Results Folder
-      run: |
-        mkdir testresults
-        if [[ -f tdd/report.out ]]; then    #Check if report exists
-          mv tdd/report.out ./testresults
-        else
-          echo "report.out not found in tdd directory."
-          exit 1 #Exit with an error code
-        fi
-    
-    # Upload test results into as artifact
-    - name: Upload Test Results
-      uses: actions/upload-artifact@v2
-      with: 
-        name: testResults
-        path: testresults
-  
-  # Create Issue for Failing Test Results
-  Test_Results:
-    name: Test Cases Fail
-    needs: Testing
+  BDD_Report:
     if: always()
+    needs: [Build_SetUp_and_TDD]
     runs-on: ubuntu-latest
     steps:
-      - name: Download Remote Test Results
-        uses: actions/download-artifact@v2
-        with:
-          name: testResults
-          path: testresults
-          
-      - name: Check for Failed Tests
-        id: get_fails_test
-        run: |
-          FAILED_TESTS=$(cat testresults/coverage.out | grep -E "FAIL\|error")
-          if [[ -n "$FAILED_TESTS" ]]; then
-            echo "Failed tests found: $FAILED_TESTS"
-            echo "fail=$FAILED_TESTS" >> $GIHUB_ENV
-            exit 1
-          else
-            echo "All tests passed."
-          fi
-          
-      - name: Check Contents
-        run: |
-          echo "Contents of report.out:"
-          cat testresults/report.out
-          echo "Failed tests count: ${{ steps.get_fails_test.outputs.fail }}"
-
-      # Create Issue for Fail Tests
-      - name: Create Issue on Test Failure
-        if: ${{ failure() }}  # Only runs if the "Check Test Results" step failed
-        uses: dacbd/create-issue-action@main
-        with:
-          token: ${{ github.token }}
-          title: "Tests Failed in ${{ github.workflow }} "
-          body: |
-            **Failed tests have been detected.**
-
-            [Failed Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            [Test Results Artifact](https://github.com/${{ github.repository }}/actions/artifacts/${{ github.run_id }}/download?name=testResults)
-
-            **Please investigate and address the failures.**
-          assignees: ${{ github.actor }}
-  
-  # Showcase Test Results
-  Test_Display:
-    name: Save Test Results
-    needs: Testing
-    runs-on: ubuntu-latest
-    steps:
-    - name: Download Remote Test Results
-      uses: actions/download-artifact@v2
+    - uses: actions/checkout@v4
+    - name: Download test report
+      uses: actions/download-artifact@v1
       with:
-        name: testResults
-
-    - name: Publish Test Results
-      if: always()
-      uses: codecov/codecov-action@v3
+        name: reports
+    - name: Send report to commit
+      uses: joonvena/robotframework-reporter-action@v2.3
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: testresults/report.out
+        gh_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      

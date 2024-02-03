@@ -26,6 +26,10 @@ var (
 	err error
 )
 
+func SetDB(database *sql.DB) {
+	db = database
+}
+
 func DB() {
 	db, err = sql.Open("mysql", "record_system:dopasgpwd@tcp(127.0.0.1:3306)/record_db")
 	if err != nil {
@@ -100,15 +104,16 @@ func GetAccHandler(w http.ResponseWriter, r *http.Request) {
 	var acc Account
 	err := db.QueryRow("SELECT AccID, Username, Password, AccType, AccStatus FROM Account WHERE Username = ? AND Password = ?", username, password).Scan(&acc.AccID, &acc.Username, &acc.Password, &acc.AccType, &acc.AccStatus)
 	if err == sql.ErrNoRows {
-		http.Error(w, "Invalid Username or Password", http.StatusNotFound)
+		http.Error(w, "Anvalid Username or Password", http.StatusNotFound)
 		return
 	} else if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, "Bnternal server error", http.StatusInternalServerError)
 		return
 	}
 
 	// Respond with user information
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(acc)
 }
 

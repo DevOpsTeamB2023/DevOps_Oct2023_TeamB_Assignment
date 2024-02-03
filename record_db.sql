@@ -21,7 +21,7 @@ VALUES(1001, 'Shaniah', 'adminpwd1', 'Admin', 'Created'),
 (2004, 'testapprove', 'approvetestpwd', 'User', 'Pending'),
 (2005, 'testupdate', 'updatetestpwd', 'User', 'Created');
 
-SELECT * FROM `Account`;
+-- SELECT * FROM `Account`;
 
 CREATE TABLE IF NOT EXISTS `Record` (
 `RecordID` int NOT NULL AUTO_INCREMENT,
@@ -41,4 +41,4 @@ VALUES(1, 'Zi Yi', 'Staff', 4, '2021/2022', 'Poverty Monitoring System', 'Shania
 (2, 'Yi Ting', 'Student', 3, '2022/2023', 'Carpooling System', 'CompanyA', 'Mr Choo CH', 'A carpooling system that employs a microservice architecture, connecting passengers and car owners. Users create accounts, with car owners transitioning to profiles requiring drivers license and plate number. Car owners publish trips, allowing passengers to enroll based on availability and schedule compatibility. The platform ensures a fair seat assignment process and grants flexibility for trip initiation or cancellation. Users can easily manage and review their trip history, promoting a sustainable and user-friendly carpooling experience.'),
 (3, 'Luke', 'Student', 3, '2023/2024', 'Android Based E-learning', 'CompanyB', 'Dr Pamela', 'User-centric mobile application designed to provide a seamless educational experience. With an intuitive interface, users can access courses, lectures, and interactive content from their Android devices. The app supports user account creation, progress tracking, and personalized learning paths. Harnessing the power of mobile technology, this E-learning app aims to make education accessible and engaging, empowering users to learn anytime, anywhere.');
 
-SELECT * FROM `Record`;
+-- SELECT * FROM `Record`;
