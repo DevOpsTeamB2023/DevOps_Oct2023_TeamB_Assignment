@@ -33,14 +33,7 @@ jobs:
     - name: Run TDD Test
       uses: robherley/go-test-action@v0.1.0
 
-    # Create Issue on Fail TDD Tests
-    - uses: actions/checkout@v3
-    - name: Getting Job Summary URL
-    - id: exp
-      uses: pl-strflt/job-summary-url-action@v1
-    - run: echo '${{ steps.exp.outputs.job_summary_url }}'
-      shell: bash
-      
+    # Create Issue on Fail TDD Tests      
     - name: Create Issue on TDD Test Failure
       if: ${{ failure() }}
       uses: dacbd/create-issue-action@main
@@ -49,7 +42,7 @@ jobs:
         title: "TDD Fail Tests in ${{ github.workflow }} "
         body: |
           **Failed tests have been detected.**
-          [Test Results Report](${{ steps.job-summary-url.outputs.job_summary_url }})
+          [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#summary- ${{ github.job }})
           
           **Please investigate and address the failures.**
         assignees: ${{ github.actor }}
