@@ -33,17 +33,6 @@ jobs:
     - name: Run TDD Test
       uses: robherley/go-test-action@v0.1.0
 
-    - name: Checkout Test Repo
-      uses: actions/checkout@v2
-      env:
-        BROWSER: chrome
-      with:
-        repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Testing
-        
-    # - name: Set up chromedriver
-    #   uses: browser-actions/setup-chrome@latest
-    # - run: chrome --version
-
     # Build and run MySQL container and detach
     - name: Start MySQL container
       run: docker run --name mysql_container -d koayyiting/mysql_test:latest
@@ -55,6 +44,11 @@ jobs:
         
         docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SHOW DATABASES;"'
         docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "USE record_db; SHOW TABLES;"'
+
+    - name: Checkout Test Repo
+      uses: actions/checkout@v2
+      with:
+        repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Testing
 
     - name: Run BDD tests
       uses: joonvena/robotframework-docker-action@v1.0
