@@ -37,12 +37,6 @@ jobs:
     - name: Extract Failed Tests
       run: rebot --report none TestCases/output.xml > failed_tests.txt
 
-    - name: Check for failed tests
-      run: |
-        if [[ -f "failed_tests.txt" && $(wc -l < "failed_tests.txt") -gt 0 ]]; then
-          exit 1  # Set exit code to trigger issue creation
-        fi
-        
     # Create Issue on Fail TDD Tests
     - name: Create Issue on TDD Test Failure
       if: ${{ failure() }}
@@ -78,30 +72,6 @@ jobs:
       uses: joonvena/robotframework-docker-action@v1.0
       with:
         robot_tests_dir: TestCases
-
-    # Checking for Failed Tests
-    - name: Extract failed tests
-      run: rebot --report none TestCases/output.xml > failed_tests.txt
-
-    - name: Check for failed tests
-      run: |
-        if [[ -f "failed_tests.txt" && $(wc -l < "failed_tests.txt") -gt 0 ]]; then
-          exit 1  # Set exit code to trigger issue creation
-        fi
-      
-    # Create Issue on Fail BDD Tests
-    - name: Create Issue on BDD Test Failure
-      if: ${{ failure() }}
-      uses: dacbd/create-issue-action@main
-      with:
-        token: ${{ github.token }}
-        title: "BDD Failed Tests in ${{ github.workflow }} "
-        body: |
-          **Failed tests have been detected.**
-          $(cat failed_tests.txt)
-          
-          **Please investigate and address the failures.**
-        assignees: luketeran, ${{ github.actor }}
 
     # Test DB if working2
     - name: Wait for MySQL to start2
