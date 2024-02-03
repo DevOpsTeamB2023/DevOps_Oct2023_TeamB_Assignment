@@ -42,7 +42,7 @@ jobs:
         title: "TDD Fail Tests in ${{ github.workflow }} "
         body: |
           **Failed tests have been detected.**
-          [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#summary)
+          [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
           
           **Please investigate and address the failures.**
         assignees: ${{ github.actor }}
@@ -78,7 +78,7 @@ jobs:
         title: "BDD Fail Tests in ${{ github.workflow }} "
         body: |
           **Failed tests have been detected.**
-          [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#summary)
+          [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
           
           **Please investigate and address the failures.**
         assignees: luketeran, ${{ github.actor }}
