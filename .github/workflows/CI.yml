@@ -62,7 +62,7 @@ jobs:
     - name: Checkout Test Repo
       uses: actions/checkout@v2
       with:
-        repository: koayyiting/BDD_TEST
+        repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Testing
 
     - name: Run BDD tests
       uses: joonvena/robotframework-docker-action@v1.0
