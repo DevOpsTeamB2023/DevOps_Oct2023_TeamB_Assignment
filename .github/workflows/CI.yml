@@ -42,7 +42,7 @@ jobs:
         title: "TDD Fail Tests in ${{ github.workflow }} "
         body: |
           **Failed tests have been detected.**
-          $(cat failed_tests.txt)
+          [Test Results Report] ("https://github.com/${{ github.repository }}/actions/runs/${{ github.run_number }}
           
           **Please investigate and address the failures.**
         assignees: ${{ github.actor }}
