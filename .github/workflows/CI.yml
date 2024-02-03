@@ -6,7 +6,7 @@ on:
 jobs:
   # Set up necessary installs
   Build_SetUp_and_TDD:
-    name: Build SetUp
+    name: Build and Test for Continuous Integration
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -77,13 +77,12 @@ jobs:
 
     - name: Upload BDD test report
       uses: actions/upload-artifact@v1
-      if: always()
       with:
         name: reports
         path: reports
 
   BDD_Report:
-    if: always()
+    if: ${{ success() }}
     needs: [Build_SetUp_and_TDD]
     runs-on: ubuntu-latest
     steps:
