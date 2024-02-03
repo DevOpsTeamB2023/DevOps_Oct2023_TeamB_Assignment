@@ -47,6 +47,14 @@ jobs:
           **Please investigate and address the failures.**
         assignees: ${{ github.actor }}
 
+    #Notify Discord Channel
+    - name: Error Discord Notification
+      uses: rjstone/discord-webhook-notify@v1
+      with:
+          severity: error
+          details: Go Tests Fail
+          webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK }}
+
     # Build and run MySQL container and detach
     - name: Start MySQL container
       run: docker run --name mysql_container -d koayyiting/mysql_test:latest
@@ -82,6 +90,15 @@ jobs:
           
           **Please investigate and address the failures.**
         assignees: luketeran, ${{ github.actor }}
+
+
+    #Notify Discord Channel
+    - name: Error Discord Notification
+      uses: rjstone/discord-webhook-notify@v1
+      with:
+          severity: error
+          details: Behaviour Tests Fail
+          webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK }}
         
     # Test DB if working2
     - name: Wait for MySQL to start2
@@ -112,7 +129,14 @@ jobs:
         
   Notify_Discord:
     runs-on: ubuntu-latest
+    if: ${{ success() }}
     steps:
-    - name: Send Discord Notification
-      run: |
-        curl -X POST -H "Content-Type: application/json" -d '{"content": "CI Successful!"}' ${{ secrets.DISCORD_WEBHOOK_URL }}
+      - name: Successful Workflow Custom Message
+        uses: rjstone/discord-webhook-notify@v1
+        with:
+            severity: info
+            color: '#ff00aa'
+            description: Success ${{ github.workflow }} Workflow from ${{ github.ref_name }}
+            details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+            footer: By ${{ github.actor }}
+            webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK }}
