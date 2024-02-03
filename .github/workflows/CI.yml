@@ -59,7 +59,7 @@ jobs:
     - name: Wait for MySQL to start2
       run: |
         sleep 10
-        docker exec mysql_container sh -c 'sleep 15 && mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SELECT * FROM Account;"'
+        docker exec mysql_container sh -c 'sleep 15 && mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "USE record_db; SELECT * FROM Account;"'
 
     - name: Upload BDD test report
       uses: actions/upload-artifact@v1
