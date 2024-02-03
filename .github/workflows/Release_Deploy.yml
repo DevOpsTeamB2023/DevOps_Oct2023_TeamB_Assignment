@@ -31,7 +31,7 @@ jobs:
     
   #Create Git Release
   Create_Git_Release:
-      # needs: Insert the name of the job for testing
+      needs: Build_SetUp_and_TDD
       name: Create Git Release
       runs-on: Ubuntu-latest
       steps:
