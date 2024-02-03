@@ -35,16 +35,9 @@ jobs:
     name: Create Git Release
     runs-on: ubuntu-latest
     steps:
-      - name: Get Current Version
-        id: get-version
+      - name: Read Version from File
+        id: read-version
         run: echo "::set-output name=version::$(cat version.txt)"
-
-      - name: Increment Version
-        id: increment-version
-        run: echo "::set-output name=version::$((${{ steps.get-version.outputs.version }} + 1))"
-
-      - name: Update Version File
-        run: echo "${{ steps.increment-version.outputs.version }}" > version.txt
 
       - name: Create a release
         id: create-new-release
@@ -52,5 +45,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: v${{ steps.increment-version.outputs.version }}
-          release_name: Release v${{ steps.increment-version.outputs.version }}
+          tag_name: v${{ steps.read-version.outputs.version }}
+          release_name: Release v${{ steps.read-version.outputs.version }}
