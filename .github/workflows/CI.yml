@@ -34,11 +34,6 @@ jobs:
       uses: robherley/go-test-action@v0.1.0
 
     # Create Issue on Fail TDD Tests
-    - name: Summary URL
-      if: ${{ failure() }}
-      id: report
-      uses: pl-strflt/job-summary-url-action@v1
-    
     - name: Create Issue on TDD Test Failure
       if: ${{ failure() }}
       uses: dacbd/create-issue-action@main
@@ -47,7 +42,7 @@ jobs:
         title: "TDD Fail Tests in ${{ github.workflow }} "
         body: |
           **Failed tests have been detected.**
-          [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#summary-${{ steps.report.outputs.job_summary_url }})
+          [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#summary)
           
           **Please investigate and address the failures.**
         assignees: ${{ github.actor }}
@@ -74,6 +69,20 @@ jobs:
       with:
         robot_tests_dir: TestCases
 
+   # Create Issue on Fail BDD Tests
+    - name: Create Issue on BDD Test Failure
+      if: ${{ failure() }}
+      uses: dacbd/create-issue-action@main
+      with:
+        token: ${{ github.token }}
+        title: "BDD Fail Tests in ${{ github.workflow }} "
+        body: |
+          **Failed tests have been detected.**
+          [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}#summary)
+          
+          **Please investigate and address the failures.**
+        assignees: luketeran, ${{ github.actor }}
+        
     # Test DB if working2
     - name: Wait for MySQL to start2
       run: |
