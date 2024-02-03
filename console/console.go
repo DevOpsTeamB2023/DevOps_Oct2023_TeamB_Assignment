@@ -3,8 +3,8 @@
 package main
 
 import (
-	"CICD_TEST/microservices/account" //change here
-	"CICD_TEST/microservices/record"  //change here
+	"DevOps_Oct2023_TeamB_Assignment/microservices/account" //change here
+	"DevOps_Oct2023_TeamB_Assignment/microservices/record"  //change here
 )
 
 func main() {

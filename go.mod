@@ -1,4 +1,4 @@
-module CICD_TEST //change here
+module DevOps_Oct2023_TeamB_Assignment //change here
 
 go 1.21.3
 
