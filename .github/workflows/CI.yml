@@ -35,6 +35,7 @@ jobs:
 
     # Create Issue on Fail TDD Tests
     - name: Summary URL
+      if: ${{ failure() }}
       id: report
       uses: pl-strflt/job-summary-url-action@v1
     
