@@ -119,6 +119,7 @@ jobs:
   BDD_Report:
     name: BDD Report
     needs: Test_BDD
+    if: always()
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
