@@ -1,10 +1,12 @@
 name: Release/Deployment  
 on:
-  workflow_run:
-    workflows:
-      - "PullRequest"
-    types:
-      - completed
+  push:
+  
+  #workflow_run:
+    #workflows:
+      #- "PullRequest"
+    #types:
+      #- completed
 
 jobs:
   # Set up necessary installs
