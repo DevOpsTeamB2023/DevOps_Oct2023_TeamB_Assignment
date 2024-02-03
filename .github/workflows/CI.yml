@@ -48,7 +48,7 @@ jobs:
     - name: Checkout Test Repo
       uses: actions/checkout@v2
       with:
-        repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Testing
+        repository: koayyiting/BDD_TEST
 
     - name: Run BDD tests
       uses: joonvena/robotframework-docker-action@v1.0
@@ -82,5 +82,3 @@ jobs:
       uses: joonvena/robotframework-reporter-action@v2.3
       with:
         gh_access_token: ${{ secrets.GITHUB_TOKEN }}
-
-      
