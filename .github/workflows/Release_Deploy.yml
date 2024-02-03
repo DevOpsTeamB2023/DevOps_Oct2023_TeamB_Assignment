@@ -35,11 +35,16 @@ jobs:
     name: Create Git Release
     runs-on: ubuntu-latest
     steps:
+      - name: Get version from text file
+        id: get_version
+        run: |
+          VERSION=$(cat version.txt | sed 's/ //g')
+          echo "::set-output name=version::${VERSION}"
+
       - name: Create a release
-        id: create-new-release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          release_tag: v${{ steps.get_version.outputs.version }}
         with:
-          tag_name: v$(cat version.txt)
-          release_name: Release v$(cat version.txt)
+          tag_name: ${{ env.release_tag }}
