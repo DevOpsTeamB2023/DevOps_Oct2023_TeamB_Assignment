@@ -8,6 +8,13 @@ jobs:
   Build_SetUp_and_TDD:
     name: Build SetUp
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: koayyiting/mysql_test:latest
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_ROOT_PASSWORD: can_we_still_score_for_dop
     steps:
     - name: Set Up Go
       uses: actions/setup-go@v5  # Setup Go after checkout
@@ -33,14 +40,32 @@ jobs:
       with:
         repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Testing
         
-    - name: Set up chromedriver
-      uses: browser-actions/setup-chrome@latest
-    - run: chrome --version
+    # - name: Set up chromedriver
+    #   uses: browser-actions/setup-chrome@latest
+    # - run: chrome --version
+
+    # Build and run MySQL container and detach
+    - name: Start MySQL container
+      run: docker run --name mysql_container -d koayyiting/mysql_test:latest
+
+    # Test DB if working
+    - name: Wait for MySQL to start
+      run: |
+        sleep 10
+        
+        docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SHOW DATABASES;"'
+        docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "USE record_db; SHOW TABLES;"'
 
     - name: Run BDD tests
       uses: joonvena/robotframework-docker-action@v1.0
       with:
         robot_tests_dir: TestCases
+
+    # Test DB if working2
+    - name: Wait for MySQL to start2
+      run: |
+        sleep 10
+        docker exec mysql_container sh -c 'sleep 15 && mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SELECT * FROM Account;"'
 
     - name: Upload BDD test report
       uses: actions/upload-artifact@v1
