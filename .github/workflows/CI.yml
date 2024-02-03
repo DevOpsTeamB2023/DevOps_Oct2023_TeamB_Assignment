@@ -5,16 +5,9 @@ on:
   
 jobs:
   # Set up necessary installs
-  Build_SetUp_and_TDD:
-    name: Build and Test for Continuous Integration
+  Build_SetUp_and_Test_TDD:
+    name: Build and Test for TDD
     runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: koayyiting/mysql_test:latest
-        ports:
-          - 3306:3306
-        env:
-          MYSQL_ROOT_PASSWORD: can_we_still_score_for_dop
     steps:
     - name: Set Up Go
       uses: actions/setup-go@v5  # Setup Go after checkout
@@ -55,6 +48,20 @@ jobs:
           details: Go Tests Fail
           webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
 
+
+  Test_BDD:
+    name: Testing BDD
+    needs: Build_SetUp_and_Test_TDD
+    if: ${{ success() }}
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: koayyiting/mysql_test:latest
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_ROOT_PASSWORD: can_we_still_score_for_dop
+    steps:
     # Build and run MySQL container and detach
     - name: Start MySQL container
       run: docker run --name mysql_container -d koayyiting/mysql_test:latest
@@ -109,8 +116,8 @@ jobs:
         path: reports
 
   BDD_Report:
-    if: ${{ success() }}
-    needs: [Build_SetUp_and_TDD]
+    name: BDD Report
+    needs: Test_BDD
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -125,13 +132,15 @@ jobs:
         
   Notify_Discord:
     runs-on: ubuntu-latest
-    if: ${{ success() }}
+    needs: BDD_Report
     steps:
       - name: Successful Workflow Custom Message
         uses: rjstone/discord-webhook-notify@v1
         with:
             severity: info
             color: '#ff00aa'
+            username: Mr CI
+            avatarUrl: https://www.pngwing.com/en/free-png-yxnja
             description: Success ${{ github.workflow }} Workflow from ${{ github.ref_name }}
             details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
             footer: By ${{ github.actor }}
