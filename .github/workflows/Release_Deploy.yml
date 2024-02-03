@@ -1,76 +1,45 @@
 name: Release/Deployment  
 on:
-  push:
-    branches: 
-      - main
-    paths:
-      - 'microservices/**'
   workflow_run:
     workflows:
-      - "Continuous Integration"
+      - "PullRequest"
     types:
       - completed
 
 jobs:
-
-  logging:
+  # Set up necessary installs
+  Build_SetUp_and_TDD:
+    name: Build SetUp
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: koayyiting/mysql_test:latest
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_ROOT_PASSWORD: can_we_still_score_for_dop
     steps:
-      - name: Debug - Print Event and Context
-        run: |
-          echo "Triggered Workflow: ${{ github.event.workflow_run.name }}"
-          echo "Event Name: ${{github.event.workflow_run.event}}" 
-          echo "Workflow_successOrfail: ${{github.event.workflow_run.conclusion}}" 
-          echo "Path Pushed: ${{github.event.workflow_run.event.paths}}" 
+    - name: Set Up Go
+      uses: actions/setup-go@v5  # Setup Go after checkout
+      with:
+        go-version: '1.21.x'
+        cache-dependency-path: subdir/go.sum
 
-  get_version_and_release:
-    runs-on: ubuntu-latest
-    # need check path but idk how check :)
-    if: github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.name, 'Continuous Integration')
+  #Testing
     
-    steps:         
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Get version number and create issue if no version number
-        id: get_version
-        run: |
-          # Extract version number from the commit message eg. v1.0.0: added feature 2.0
-          version_number=$(git log --format=%B -n 1 ${{ github.sha }} | awk '/^v[0-9]+\.[0-9]+\.[0-9]+/{print $1}')
-          
-          # Debugging: Print version number
-          echo "Version Number: '$version_number'"
-
-          # Set the version_number as an output
-          echo "::set-output name=version_number::${version_number}"
-
-      - name: Log version number
-        run: echo "Version Number:${{ steps.get_version.outputs.version_number }}"
-
-      - name: Create issue for empty version number
-        if: ${{ steps.get_version.outputs.version_number == '' }}
-        uses: dacbd/create-issue-action@main
-        with:
-          token: ${{ github.token }}
-          title: No Version Number in Commit Message - `${{ github.workflow }}` failed.
-          body: |
-            ### Context
-            [Failed Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            [Codebase](https://github.com/${{ github.repository }}/tree/${{ github.sha }})
-            Workflow name - `${{ github.workflow }}`
-            assignees: `${{ github.actor }}`
-        
-      - name: Set environment version for release
-        run: echo "RELEASE_VERSION=${{ steps.get_version.outputs.version_number }}" >> $GITHUB_ENV
-  
-      - name: Create a release
-        if: ${{ steps.get_version.outputs.version_number != '' }}
+  #Create Git Release
+  Create_Git_Release:
+      # needs: Insert the name of the job for testing
+      name: Create Git Release
+      runs-on: Ubuntu-latest
+      steps:
+      - name: Set environment version
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: create a release
         id: create-new-release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         with:
           tag_name: ${{ env.RELEASE_VERSION }}
-          release_name: Release ${{ env.RELEASE_VERSION }}
-          body: |
-            Release notes for ${{ env.RELEASE_VERSION }}.
+          release_name: Release ${{env.RELEASE_VERSION }}
