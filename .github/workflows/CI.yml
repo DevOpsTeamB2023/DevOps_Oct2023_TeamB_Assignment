@@ -53,7 +53,7 @@ jobs:
       with:
           severity: error
           details: Go Tests Fail
-          webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK }}
+          webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
 
     # Build and run MySQL container and detach
     - name: Start MySQL container
@@ -94,19 +94,15 @@ jobs:
 
     #Notify Discord Channel
     - name: Error Discord Notification
+      if: ${{ failure() }}
       uses: rjstone/discord-webhook-notify@v1
       with:
           severity: error
           details: Behaviour Tests Fail
-          webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK }}
+          webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
         
-    # Test DB if working2
-    - name: Wait for MySQL to start2
-      run: |
-        sleep 10
-        docker exec mysql_container sh -c 'sleep 15 && mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "USE record_db; SELECT * FROM Account;"'
-
     - name: Upload BDD test report
+      if: ${{ success() }}
       uses: actions/upload-artifact@v1
       with:
         name: reports
@@ -139,4 +135,4 @@ jobs:
             description: Success ${{ github.workflow }} Workflow from ${{ github.ref_name }}
             details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
             footer: By ${{ github.actor }}
-            webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK }}
+            webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
