@@ -50,9 +50,16 @@ jobs:
           tag_name: ${{ steps.get-latest-tag.outputs.tag }}
           release_name: Release ${{ steps.get-latest-tag.outputs.tag }}
           
-  Notify_Discord:
+  Set_Env_Variables:
     runs-on: ubuntu-latest
     needs: Create_Git_Release
+    env:
+      DISCORD_SEVERITY: ${{ needs.Create_Git_Release.result == 'success' && 'info' || 'error' }}
+      DISCORD_COLOR: ${{ needs.Create_Git_Release.result == 'success' && '#00ff00' || '#ff0000' }}
+
+  Notify_Discord:
+    runs-on: ubuntu-latest
+    needs: [Create_Git_Release, Set_Env_Variables]
     steps:
       - name: Discord Notification
         uses: rjstone/discord-webhook-notify@v1
@@ -61,7 +68,7 @@ jobs:
           color: ${{ env.DISCORD_COLOR }}
           username: Mr CD
           avatarUrl: https://www.pngwing.com/en/free-png-yxnja
-          description: ${{ if(eq(needs.Create_Git_Release.outputs.step_result, 'success'), 'Success', 'Failure') }} in ${{ github.workflow }} Workflow from ${{ github.ref_name }}
+          description: ${{ needs.Create_Git_Release.result == 'success' && 'Success' || 'Failure' }} in ${{ github.workflow }} Workflow from ${{ github.ref_name }}
           details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
           footer: By ${{ github.actor }}
           webhookUrl: ${{ secrets.CD_DISCORD_WEBHOOK_URL }}
