@@ -109,10 +109,17 @@ jobs:
           ALL_CHANGED_FILES: ${{ steps.changed-markdown-files.outputs.all_changed_files }}
 
       - name: Prepare Files
+        id: issue_body
         run: |
+          COMMENTBODY = ""
           files=(
             - "${{ steps.changed-markdown-files.outputs.all_changed_files }}"
           )
+          for file in "${files[@]}"; do
+            COMMENTBODY="${file_list}- [${file}](${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }}/$file)\n"
+          done
+          echo "COMMENTBODY=$COMMENTBODY" >> $GITHUB_ENV
+          echo "${COMMENTBODY}"
 
       # Create Issue for Request Changes
       - name: Create Issue for Failed Test
@@ -122,12 +129,8 @@ jobs:
           title: "[REQUEST CHANGES] PR#${{ github.event.pull_request.number }} "
           body: |
             **Files Changed -**
-            $(for file in "${files[@]}"; do
-              echo "- $file(https://github.com/${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }}/$file)"
-            done)
-            
-            ${{ steps.changed-markdown-files.outputs.all_changed_files }}
-            (https://github.com/${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }}/${{ steps.changed-markdown-files.outputs.all_changed_files }})
+
+            ${{ steps.issue_body.outputs.commentbody }}
             
             [View Code on GitHub](https://github.com/${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }})
             
