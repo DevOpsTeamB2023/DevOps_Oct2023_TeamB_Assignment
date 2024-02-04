@@ -223,7 +223,7 @@ jobs:
             **Files Changed -**
             $(for file in "${{ steps.changed-markdown-files.outputs.all_changed_files }}"; do
               echo "- $file(https://github.com/${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }}/$file)"
-              done)
+            done)
             
             ${{ steps.changed-markdown-files.outputs.all_changed_files }}
             (https://github.com/${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }}/${{ steps.changed-markdown-files.outputs.all_changed_files }})
@@ -241,7 +241,7 @@ jobs:
             username: Mr PR
             color: '#ff00aa'
             description: Changes Requested
-            details: 'Peer review requested for changes on PR#${{ github.event.number }} on modified code. For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
+            details: 'Peer review requested for changes on PR#${{ github.event.number }} on modified code. For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
             text: Peer Reviewed
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
             
