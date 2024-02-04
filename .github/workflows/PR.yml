@@ -42,11 +42,38 @@ jobs:
       with:
           severity: info
           username: Mr PR
-          color: '##f85c05'
+          color: '#f85c05'
           description: ${{ github.workflow }} failed.
           details: 'Please review workflow and make changes!'
           webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
 
+    # # TDD Test
+    # - uses: actions/checkout@v4
+    # - name: Run TDD Test
+    #   uses: robherley/go-test-action@v0.1.0
+
+    # # Create Issue on Fail TDD Tests
+    # - name: Create Issue on TDD Test Failure
+    #   if: ${{ failure() }}
+    #   uses: dacbd/create-issue-action@main
+    #   with:
+    #     token: ${{ github.token }}
+    #     title: "Unit Testing Failings in ${{ github.workflow }} "
+    #     body: |
+    #       **Failed tests have been detected.**
+    #       [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+    #       **Please investigate and address the failures.**
+    #     assignees: ${{ github.actor }}
+
+    # - name: TDD Error Discord
+    #   if: ${{ failure() }}
+    #   uses: rjstone/discord-webhook-notify@v1
+    #   with:
+    #       severity: error
+    #       details: Go Unit Tests Fails
+    #       webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
+          
   # Test_BDD:
   #   name: BDD Test
   #   needs: Build_SetUp
@@ -128,7 +155,7 @@ jobs:
 
   Requests_AddReviewer:
     name: Adding Reviewer
-    needs: Test_BDD
+    # needs: Test_BDD
     if: ${{ success() }}
     runs-on: ubuntu-latest
     steps:
@@ -157,6 +184,18 @@ jobs:
           reviewers: ${{ env.REVIEWERS }}
           re-request-when-changes-requested: true
           re-request-when-approved: true
+
+      #Notify Discord Channel
+      - name: Request Review Discord
+        uses: rjstone/discord-webhook-notify@v1
+        with:
+            severity: info
+            username: Mr PR
+            color: '#ff00aa'
+            text: Review 
+            description: Awaiting For Peer Review
+            details: 'Please review pull request.\n More details: https://github.com/${{ github.repository }}/pull/{{ github.event.number }}'
+            webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
           
   RequestChange_Review:
     name: Request Change
