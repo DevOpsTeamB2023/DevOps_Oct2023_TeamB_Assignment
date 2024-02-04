@@ -54,14 +54,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: Create_Git_Release
     steps:
-      - name: Successful Discord Notification
+      - name: Discord Notification
         uses: rjstone/discord-webhook-notify@v1
         with:
-            severity: info
-            color: '#ff00aa'
-            username: Mr CD
-            avatarUrl: https://www.pngwing.com/en/free-png-yxnja
-            description: Success ${{ github.workflow }} Workflow from ${{ github.ref_name }}
-            details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
-            footer: By ${{ github.actor }}
-            webhookUrl: ${{ secrets.CD_DISCORD_WEBHOOK_URL }}
+          severity: ${{ if(eq(needs.Create_Git_Release.result, 'success'), 'info', 'error') }}
+          color: ${{ if(eq(needs.Create_Git_Release.result, 'success'), '#00ff00', '#ff0000') }}
+          username: Mr CD
+          avatarUrl: https://www.pngwing.com/en/free-png-yxnja
+          description: ${{ if(eq(needs.Create_Git_Release.result, 'success'), 'Success', 'Failure') }} in ${{ github.workflow }} Workflow from ${{ github.ref_name }}
+          details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+          footer: By ${{ github.actor }}
+          webhookUrl: ${{ secrets.CD_DISCORD_WEBHOOK_URL }}
