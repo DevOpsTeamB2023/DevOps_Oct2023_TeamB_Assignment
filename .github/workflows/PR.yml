@@ -9,8 +9,8 @@ on:
     types:
       - submitted
 jobs:
-  Build_SetUp_and_Test_TDD:
-    name: Build and Test for TDD
+  Build_SetUp:
+    name: Build SetUp
     runs-on: ubuntu-latest
     steps:
     - name: Set Up Go
@@ -29,7 +29,7 @@ jobs:
 
   Test_BDD:
     name: BDD Test
-    needs: Build_SetUp_and_Test_TDD
+    needs: Build_SetUp
     if: ${{ success() }}
     runs-on: ubuntu-latest
     services:
@@ -77,20 +77,13 @@ jobs:
         assignees: luketeran, ${{ github.actor }}
 
     #Notify Discord Channel
-    - name: BDD Fail Discord
-      run: |
-        curl -X POST -H "Content-Type: application/json" -d '{
-          "embeds": [
-            {
-              "title": "Behaviour Tests Failings for **PR #${{ github.event.number }}: ${{ github.event.pull_request.title }}**",
-              "description": " Please review and address the fail tests for PR #${{ github.event.number }}.\nSee details on GitHub: https://github.com/${{ github.repository }}/pull/{{ github.event.number }}",
-              "color": #ec9733,
-              "footer": {
-                "text": "GitHub Action Notification | Timestamp: ${{ github.event.created_at }}"
-              }
-            }
-          ]
-        }' ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
+    - name: BDD Error Discord
+      if: ${{ failure() }}
+      uses: rjstone/discord-webhook-notify@v1
+      with:
+          severity: error
+          details: Behaviour Tests Fail
+          webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
         
     - name: Upload BDD Test Report
       if: always()
@@ -98,23 +91,19 @@ jobs:
       with:
         name: reports
         path: reports
-        
-  BDD_Report:
-      name: BDD Report
-      needs: Test_BDD
+
+    - uses: actions/checkout@v4
+    - name: Download test report
       if: always()
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v4
-        - name: Download test report
-          uses: actions/download-artifact@v1
-          with:
-            name: reports
-      
-        - name: Send Report to Commit
-          uses: joonvena/robotframework-reporter-action@v2.3
-          with:
-            gh_access_token: ${{ secrets.GITHUB_TOKEN }}
+      uses: actions/download-artifact@v1
+      with:
+        name: reports
+  
+    - name: Send Report to Commit
+      if: always()
+      uses: joonvena/robotframework-reporter-action@v2.3
+      with:
+        gh_access_token: ${{ secrets.GITHUB_TOKEN }}
 
   Requests_AddReviewer:
     name: Adding Reviewer
@@ -182,20 +171,12 @@ jobs:
             ${{ github.event.review.body }}
           assignees: ${{ github.event.pull_request.user.login }}
           
-      - name: Request Change Discord
-        run: |
-          curl -X POST -H "Content-Type: application/json" -d '{
-            "embeds": [
-              {
-                "title": " Changes Requested for **PR #${{ github.event.number }}: ${{ github.event.pull_request.title }}**",
-                "description": " **${{ github.event.pull_request.user.login }}**, Please review and address the feedback for PR #${{ github.event.number }}.\nKey changes: ${{ github.event.pull_request.body | truncate(150, true, "...") }}  \nSee details on GitHub: https://github.com/${{ github.repository }}/pull/{{ github.event.number }}",
-                "color": #ef4149,
-                "footer": {
-                  "text": "GitHub Action Notification | Timestamp: ${{ github.event.created_at }}"
-                }
-              }
-            ]
-          }' ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
+      - name: Request Change Warn Discord
+        uses: rjstone/discord-webhook-notify@v1
+        with:
+            severity: warn
+            details: Request Changes for PR#${{ github.event.pull_request.number }}
+            webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
           
   Approved_Review:
     name: Approved Review
@@ -221,16 +202,11 @@ jobs:
 
       - name: Approved Discord
         if: ${{ success() }}
-        run: |
-          curl -X POST -H "Content-Type: application/json" -d '{
-            "embeds": [
-              {
-                "title": " Approved and Merged **PR #${{ github.event.number }}: ${{ github.event.pull_request.title }}**",
-                "description": "See details on GitHub: https://github.com/${{ github.repository }}/pull/{{ github.event.number }}",
-                "color": #ff00aa,
-                "footer": {
-                  "text": "GitHub Action Notification | Timestamp: ${{ github.event.created_at }}"
-                }
-              }
-            ]
-          }' ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
+        uses: rjstone/discord-webhook-notify@v1
+        with:
+            severity: info
+            username: Mr PR
+            color: '#32eb39'
+            description: Merged PR#${{ github.pull_request.number }}
+            footer: By ${{ github.actor }}
+            webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
