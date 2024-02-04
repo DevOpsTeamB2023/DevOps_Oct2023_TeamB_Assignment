@@ -1,4 +1,4 @@
-#Trigger when there is a push to main
+#Trigger when there is a push to branches
 name: Continuous Integration
 on:
   push:
@@ -42,11 +42,12 @@ jobs:
 
     #Notify Discord Channel
     - name: TDD Error Discord Notification
+      if: ${{ failure() }}
       run: |
         curl -X POST -H "Content-Type: application/json" -d '{
           "embeds": [
             {
-              "title": "⚠️ Unit Testing Fails in ${{ github.workflow }}!",
+              "title": "⚠️ Unit Tests Fails in ${{ github.workflow }}!",
               "description": "One or more tests have failed in the CI pipeline. Please investigate and address the issues.\n More Details: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
               "color": 0xe74c3c,
               "footer": {
@@ -63,30 +64,42 @@ jobs:
       #     details: Go Tests Fail
       #     webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
 
+    - name: Generate Coverage Profile
+      run: |
+        go test -coverprofile=coverage.out ./...
+        go tool cover -html=coverage.out -o coverage.html
+        coverage_percentage=$(go tool cover -func=coverage.out | tail -1 | awk '{print $NF}')
+
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: coverage.html
+
   Test_BDD:
     name: Testing BDD
     needs: Build_SetUp_and_Test_TDD
     if: ${{ success() }}
     runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: koayyiting/mysql_test:latest
-        ports:
-          - 3306:3306
-        env:
-          MYSQL_ROOT_PASSWORD: can_we_still_score_for_dop
+    # services:
+    #   mysql:
+    #     image: koayyiting/mysql_test:latest
+    #     ports:
+    #       - 3306:3306
+    #     env:
+    #       MYSQL_ROOT_PASSWORD: can_we_still_score_for_dop
     steps:
-    # Build and run MySQL container and detach
-    - name: Start MySQL Container
-      run: docker run --name mysql_container -d koayyiting/mysql_test:latest
+    # # Build and run MySQL container and detach
+    # - name: Start MySQL Container
+    #   run: docker run --name mysql_container -d koayyiting/mysql_test:latest
 
-    # Test DB if working
-    - name: Wait MySQL To Start
-      run: |
-        sleep 10
+    # # Test DB if working
+    # - name: Wait MySQL To Start
+    #   run: |
+    #     sleep 10
         
-        docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SHOW DATABASES;"'
-        docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "USE record_db; SHOW TABLES;"'
+    #     docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SHOW DATABASES;"'
+    #     docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "USE record_db; SHOW TABLES;"'
 
     - name: Checkout Test Repo
       uses: actions/checkout@v2
@@ -115,12 +128,13 @@ jobs:
 
     #Notify Discord Channel
     - name: BDD Fail Discord Notification
+      if: ${{ failure() }}
       run: |
         curl -X POST -H "Content-Type: application/json" -d '{
           "embeds": [
             {
-              "title": "⚠️ Behaviour Tests Fails in ${{ github.workflow }}!",
-              "description": "One or more tests have failed in the CI pipeline. Please investigate and address the issues.\n More Details: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "title": "⚠️ Behaviour Tests Fails in \"${{ github.workflow }}\"!",
+              "description": "One or more tests have failed in the CI pipeline. Please investigate and address the issues.\nMore Details: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
               "color": 0xe74c3c,
               "footer": {
                 "text": "Workflow: ${{ github.workflow }} | Branch: ${{ github.ref }} | Timestamp: ${{ github.event.created_at }}"
