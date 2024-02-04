@@ -115,6 +115,7 @@ jobs:
 
     #Notify Discord Channel
     - name: BDD Fail Discord Notification
+      if: ${{ failure() }}
       run: |
         curl -X POST -H "Content-Type: application/json" -d '{
           "embeds": [
