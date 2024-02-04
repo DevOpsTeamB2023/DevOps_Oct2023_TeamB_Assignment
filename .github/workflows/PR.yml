@@ -196,7 +196,7 @@ jobs:
             content: ''
             details: |
                 Requesting feedback review on modified code.
-                More details:https://github.com/${{ github.repository }}/pull/${{ github.event.number }}
+                For more details here(https://github.com/${{ github.repository }}/pull/${{ github.event.number }})
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
           
   RequestChange_Review:
