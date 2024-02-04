@@ -192,10 +192,10 @@ jobs:
             severity: info
             username: Mr PR
             color: '#ff00aa'
-            text: <@TECH LEAD> Review 
+            text: "@TECH LEAD Review"
             description: Awaiting For Peer Review
             details: |
-                '<@TECH LEAD>, Please review pull request.
+                '@TECH LEAD, Please review pull request.
                 More details: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
           
