@@ -29,6 +29,10 @@ var (
 	err error
 )
 
+func SetDB(database *sql.DB) {
+	db = database
+}
+
 func DB() {
 	db, err = sql.Open("mysql", "record_system:dopasgpwd@tcp(127.0.0.1:3306)/record_db")
 	if err != nil {

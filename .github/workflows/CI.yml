@@ -1,156 +1,150 @@
 #Trigger when there is a push to main
 name: Continuous Integration
-
 on:
-  pull_request: 
-   types: 
-    - merged
-    - closed
-   
   push:
-    branches:
-      - main
-    
+  
 jobs:
   # Set up necessary installs
-  Build_SetUp:
-    name: Build SetUp
-    uses: ./.github/workflows/BuildingSetUp.yml
-
-  # Reference to Test Cases in repository
-  Testing:
-    name: Run Test Cases
-    needs: Build_SetUp
+  Build_SetUp_and_Test_TDD:
+    name: Build and Test for TDD
     runs-on: ubuntu-latest
     steps:
+    - name: Set Up Go
+      uses: actions/setup-go@v5  # Setup Go after checkout
+      with:
+        go-version: '1.21.x'
+        cache-dependency-path: subdir/go.sum
+
     # [Edit] Retrieving from Development Repository
     - name: Checkout Development
       uses: actions/checkout@v4
-      with:
-        fetch: --depth=1 # Reduces clone size
-        repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Development
+      
+    - name: Install Dependencies
+      run: |
+        go mod download
 
-    # [Edit] Retrieving from Testing Repository
-    - name: Checkout Testing
-      uses: actions/checkout@v4
-      with:
-        fetch: --depth=1 # Reduces clone size
-        repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Testing
+    - name: Run TDD Test
+      uses: robherley/go-test-action@v0.1.0
 
-    # [Edit] Test Cases
-    - name: Use Source Folder
-      if: always()
-      run: go get -v -t -d ./microservices
-
-    - name: Use Test Folder
-      run: go test -v ./tdd -coverageprofile=report.out
-
-    - name: Upload Coverage Report
-      uses: codecov/codec-actions@v3
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-
-    # Create Issue for Failed Workflow
-    - if: ${{ failure() }}
-      name: Create Issue on Failed workflow
+    # Create Issue on Fail TDD Tests
+    - name: Create Issue on TDD Test Failure
+      if: ${{ failure() }}
       uses: dacbd/create-issue-action@main
       with:
         token: ${{ github.token }}
-        title: Issue - `${{ github.workflow }}` failed.
+        title: "TDD Fail Tests in ${{ github.workflow }} "
         body: |
-          [Failed Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          [Codebase](https://github.com/${{ github.repository }}/tree/${{ github.sha }})
-          Workflow name - `${{ github.workflow }}`
-          Job -           `${{ github.job }}`
-          status -        `${{ job.status }}`
-          assignees: `${{ github.actor }}`
-        assignees: lacsadoshaniahsantiago, koayyiting
-    
-    # [Edit] Check tdd directory
-    - name: Display tdd directory and content
-      run: |
-        ls -la tdd          # List contents
-        cat tdd/report.out  # Print contents of report.out
+          **Failed tests have been detected.**
+          [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+          **Please investigate and address the failures.**
+        assignees: ${{ github.actor }}
 
-    # [Edit] Create testresults directory and move test results in new directory
-    - name: Create Test Results Folder
+    #Notify Discord Channel
+    - name: Error Discord Notification
+      if: ${{ failure() }}
+      uses: rjstone/discord-webhook-notify@v1
+      with:
+          severity: error
+          details: Go Tests Fail
+          webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
+
+
+  Test_BDD:
+    name: Testing BDD
+    needs: Build_SetUp_and_Test_TDD
+    if: ${{ success() }}
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: koayyiting/mysql_test:latest
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_ROOT_PASSWORD: can_we_still_score_for_dop
+    steps:
+    # Build and run MySQL container and detach
+    - name: Start MySQL Container
+      run: docker run --name mysql_container -d koayyiting/mysql_test:latest
+
+    # Test DB if working
+    - name: Wait MySQL To Start
       run: |
-        mkdir testresults
-        if [[ -f tdd/report.out ]]; then    #Check if report exists
-          mv tdd/report.out ./testresults
-        else
-          echo "report.out not found in tdd directory."
-          exit 1 #Exit with an error code
-        fi
-    
-    # Upload test results into as artifact
-    - name: Upload Test Results
-      uses: actions/upload-artifact@v2
-      with: 
-        name: testResults
-        path: testresults
-  
-  # Create Issue for Failing Test Results
-  Test_Results:
-    name: Test Cases Fail
-    needs: Testing
+        sleep 10
+        
+        docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SHOW DATABASES;"'
+        docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "USE record_db; SHOW TABLES;"'
+
+    - name: Checkout Test Repo
+      uses: actions/checkout@v2
+      with:
+        repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Testing
+
+    - name: Run BDD tests
+      uses: joonvena/robotframework-docker-action@v1.0
+      with:
+        robot_tests_dir: TestCases
+
+   # Create Issue on Fail BDD Tests
+    - name: Create Issue on BDD Test Failure
+      if: ${{ failure() }}
+      uses: dacbd/create-issue-action@main
+      with:
+        token: ${{ github.token }}
+        title: "BDD Fail Tests in ${{ github.workflow }} "
+        body: |
+          **Failed tests have been detected.**
+          [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+          **Please investigate and address the failures.**
+        assignees: luketeran, ${{ github.actor }}
+
+
+    #Notify Discord Channel
+    - name: Error Discord Notification
+      if: ${{ failure() }}
+      uses: rjstone/discord-webhook-notify@v1
+      with:
+          severity: error
+          details: Behaviour Tests Fail
+          webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
+        
+    - name: Upload BDD Test Report
+      if: always()
+      uses: actions/upload-artifact@v1
+      with:
+        name: reports
+        path: reports
+
+  BDD_Report:
+    name: BDD Report
+    needs: Test_BDD
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Download Remote Test Results
-        uses: actions/download-artifact@v2
-        with:
-          name: testResults
-          path: testresults
-          
-      - name: Check for Failed Tests
-        id: get_fails_test
-        run: |
-          FAILED_TESTS=$(cat testresults/coverage.out | grep -E "FAIL\|error")
-          if [[ -n "$FAILED_TESTS" ]]; then
-            echo "Failed tests found: $FAILED_TESTS"
-            echo "fail=$FAILED_TESTS" >> $GIHUB_ENV
-            exit 1
-          else
-            echo "All tests passed."
-          fi
-          
-      - name: Check Contents
-        run: |
-          echo "Contents of report.out:"
-          cat testresults/report.out
-          echo "Failed tests count: ${{ steps.get_fails_test.outputs.fail }}"
+    - uses: actions/checkout@v4
+    - name: Download test report
+      uses: actions/download-artifact@v1
+      with:
+        name: reports
 
-      # Create Issue for Fail Tests
-      - name: Create Issue on Test Failure
-        if: ${{ failure() }}  # Only runs if the "Check Test Results" step failed
-        uses: dacbd/create-issue-action@main
-        with:
-          token: ${{ github.token }}
-          title: "Tests Failed in ${{ github.workflow }} "
-          body: |
-            **Failed tests have been detected.**
-
-            [Failed Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            [Test Results Artifact](https://github.com/${{ github.repository }}/actions/artifacts/${{ github.run_id }}/download?name=testResults)
-
-            **Please investigate and address the failures.**
-          assignees: ${{ github.actor }}
-  
-  # Showcase Test Results
-  Test_Display:
-    name: Save Test Results
-    needs: Testing
+    - name: Send Report to Commit
+      uses: joonvena/robotframework-reporter-action@v2.3
+      with:
+        gh_access_token: ${{ secrets.GITHUB_TOKEN }}
+        
+  Notify_Discord:
     runs-on: ubuntu-latest
+    needs: BDD_Report
     steps:
-    - name: Download Remote Test Results
-      uses: actions/download-artifact@v2
-      with:
-        name: testResults
-
-    - name: Publish Test Results
-      if: always()
-      uses: codecov/codecov-action@v3
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: testresults/report.out
+      - name: Successful Discord Notification
+        uses: rjstone/discord-webhook-notify@v1
+        with:
+            severity: info
+            color: '#ff00aa'
+            username: Mr CI
+            avatarUrl: https://www.pngwing.com/en/free-png-yxnja
+            description: Success ${{ github.workflow }} Workflow from ${{ github.ref_name }}
+            details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+            footer: By ${{ github.actor }}
+            webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}

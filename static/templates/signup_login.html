@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Sign up and Login Page</title>
+    <script src="../js/javascript.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container mt-5" style="padding:100px">
+        <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+              <button class="nav-link active" id="nav-login-tab" data-bs-toggle="tab" data-bs-target="#nav-login" type="button" role="tab" aria-controls="nav-login" aria-selected="true">Log In</button>
+              <button class="nav-link" id="nav-signup-tab" data-bs-toggle="tab" data-bs-target="#nav-signup" type="button" role="tab" aria-controls="nav-signup" aria-selected="false">Sign Up</button>
+            </div>
+        </nav>
+        <div class="tab-content" id="nav-tabContent">
+            <div class="tab-pane fade show active" id="nav-login" role="tabpanel" aria-labelledby="nav-login-tab">
+                <div class="mx-5">
+                    <h4 class="mt-4">Log In</h4>
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label for="login_username">Username</label>
+                            <input type="text" class="form-control" id="login_username">
+                        </div> <br>
+                        <div class="form-group">
+                            <label for="login_password">Password</label>
+                            <input type="text" class="form-control" id="login_password">
+                        </div> 
+                        <p id="error-message" style="color:red"></p> <br>
+                        <button type="submit" id="login_button" class="btn btn-primary" onclick="return login()">Log In</button>
+                    </form>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="nav-signup" role="tabpanel" aria-labelledby="nav-signup-tab">
+                <div class="mx-5">
+                    <h4 class="mt-4">Sign Up</h4>
+                <form id="signupForm">
+                    <div class="form-group">
+                        <label for="signup_username">Username</label>
+                        <input type="text" class="form-control" id="signup_username">
+                    </div> <br>
+                    <div class="form-group">
+                        <label for="signup_password">Password</label>
+                        <input type="text" class="form-control" id="signup_password">
+                    </div> <br>
+                    <button type="submit" id="signup_button" class="btn btn-primary" onclick="return signup()">Sign Up</button>
+                </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
