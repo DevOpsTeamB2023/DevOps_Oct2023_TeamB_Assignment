@@ -108,13 +108,12 @@ jobs:
         uses: tj-actions/changed-files@v42
         env:
           ALL_CHANGED_FILES: ${{ steps.changed-markdown-files.outputs.all_changed_files }}
-
+          
       - name: Prepare Files
         id: issue_body
         run: |
-          files=(${{ steps.changed-markdown-files.outputs.all_changed_files }})
-          for file in "${files[@]}"; do
-            COMMENTBODY="${file_list} - [Changes](${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }}/$file)\n"
+          for file in ${ALL_CHANGED_FILES}; do
+            COMMENTBODY="${file} - [Code Change](${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }}/$file)\n"
           done
           echo "COMMENTBODY=$COMMENTBODY" >> $GITHUB_ENV
           echo "${COMMENTBODY}"
@@ -127,7 +126,7 @@ jobs:
           title: "[REQUEST CHANGES] PR#${{ github.event.pull_request.number }} "
           body: |
             **Files Changed -**
-
+            ${{ steps.changed-markdown-files.outputs.all_changed_files }}
             ${{ steps.issue_body.outputs.commentbody }}
             
             [View Code on GitHub](https://github.com/${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }})
