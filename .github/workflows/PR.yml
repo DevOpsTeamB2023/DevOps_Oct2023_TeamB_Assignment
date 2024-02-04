@@ -192,6 +192,7 @@ jobs:
             severity: info
             username: Mr PR
             color: '#ff00aa'
+            description: Awaiting For Peer Review
             details: 'Requesting feedback review on modified code. For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
             text: Peer Review
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
@@ -230,12 +231,17 @@ jobs:
             ${{ github.event.review.body }}
           assignees: ${{ github.event.pull_request.user.login }}
           
-      - name: Request Change Warn Discord
+      - name: Request Review Discord
         uses: rjstone/discord-webhook-notify@v1
         with:
-            severity: warn
-            details: Request Changes for PR#${{ github.event.pull_request.number }}
+            severity: info
+            username: Mr PR
+            color: '#ff00aa'
+            description: Awaiting Peer Review
+            details: 'Requesting feedback review on modified code. For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
+            text: Peer Reviewed
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
+            
           
   Approved_Review:
     name: Approved Review
@@ -243,6 +249,17 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request_review' && github.event.review.state == 'approved'
     steps:
+      - name: Request Review Discord
+        uses: rjstone/discord-webhook-notify@v1
+        with:
+            severity: info
+            username: Mr PR
+            color: '#00ff00'
+            description: Approved Peer Review
+            details: 'Approved peer review on PR#${{ github.event.number }}. For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
+            text: Peer Reviewed Result
+            webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
+            
       - name: Merge Pull Request
         uses: actions/github-script@v6
         with:
@@ -266,6 +283,6 @@ jobs:
             severity: info
             username: Mr PR
             color: '#1fe008'
-            description: Merged PR#${{ github.pull_request.number }}
+            description: Merged PR#${{ github.event.number }}
             footer: By ${{ github.actor }}
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
