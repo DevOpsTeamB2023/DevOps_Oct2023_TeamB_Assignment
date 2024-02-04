@@ -110,7 +110,9 @@ jobs:
 
       - name: Prepare Files
         run: |
-          files = (${{ steps.changed-markdown-files.outputs.all_changed_files }})
+          files=(
+            - "${{ steps.changed-markdown-files.outputs.all_changed_files }}"
+          )
 
       # Create Issue for Request Changes
       - name: Create Issue for Failed Test
