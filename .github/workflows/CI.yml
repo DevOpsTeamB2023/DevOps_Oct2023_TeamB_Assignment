@@ -6,19 +6,15 @@ on:
 jobs:
   # Set up necessary installs
   Build_SetUp:
-    name: Build Setup
+    name: Build Set Up
     runs-on: ubuntu-latest
     steps:
     - name: Set Up Go
-      uses: actions/setup-go@v5  # Setup Go after checkout
+      uses: actions/setup-go@v5
       with:
         go-version: '1.21.x'
         cache-dependency-path: subdir/go.sum
 
-  Test_TDD:
-    name: Testing TDD
-    runs-on: ubuntu-latest
-    steps:
     - name: Checkout Development Repository
       uses: actions/checkout@v4
       
@@ -26,6 +22,11 @@ jobs:
       run: |
         go mod download
 
+  Test_TDD:
+    name: Testing TDD
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
     - name: Run TDD Test
       uses: robherley/go-test-action@v0.1.0
 
@@ -130,19 +131,32 @@ jobs:
         name: reports
         path: reports
 
-  BDD_Report:
-    name: BDD Report
-    needs: Test_BDD
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
     - uses: actions/checkout@v4
-    - name: Download test report
+    - name: Download BDD Test Report
+      if: always()
       uses: actions/download-artifact@v1
       with:
         name: reports
 
-    - name: Send Report to Commit
+    - name: Send BDD Report to Commit
+      if: always()
       uses: joonvena/robotframework-reporter-action@v2.3
       with:
         gh_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+  # BDD_Report:
+  #   name: BDD Report
+  #   needs: Test_BDD
+  #   if: always()
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   - name: Download test report
+  #     uses: actions/download-artifact@v1
+  #     with:
+  #       name: reports
+
+  #   - name: Send Report to Commit
+  #     uses: joonvena/robotframework-reporter-action@v2.3
+  #     with:
+  #       gh_access_token: ${{ secrets.GITHUB_TOKEN }}
