@@ -32,6 +32,7 @@ jobs:
         assignees: lacsadoshaniahsantiago, koayyiting
 
     - name: Workflow Fail Discord
+      if: ${{ failure() }}
       uses: rjstone/discord-webhook-notify@v1
       with:
           severity: info
