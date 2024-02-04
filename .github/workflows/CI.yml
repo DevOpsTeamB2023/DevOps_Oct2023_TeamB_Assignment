@@ -5,8 +5,8 @@ on:
   
 jobs:
   # Set up necessary installs
-  Build_SetUp_and_Test_TDD:
-    name: Build and Test for TDD
+  Build_SetUp:
+    name: Build Setup
     runs-on: ubuntu-latest
     steps:
     - name: Set Up Go
@@ -15,8 +15,11 @@ jobs:
         go-version: '1.21.x'
         cache-dependency-path: subdir/go.sum
 
-    # [Edit] Retrieving from Development Repository
-    - name: Checkout Development
+  Test_TDD:
+    name: Testing TDD
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Development Repository
       uses: actions/checkout@v4
       
     - name: Install Dependencies
@@ -41,34 +44,17 @@ jobs:
         assignees: ${{ github.actor }}
 
     #Notify Discord Channel
-    - name: BDD Fail Discord
-      run: |
-        curl -X POST -H "Content-Type: application/json" -d '{
-          "embeds": [
-            {
-              "title": "⚠️ Behaviour Tests Failed in CI",
-              "description": "One or more tests have failed in the CI pipeline. Please investigate and address the issues.",
-              "color": 0xe74c3c,
-              "footer": {
-                "text": "Workflow: ${{ github.workflow }} | Branch: ${{ github.ref }} | Timestamp: ${{ github.event.created_at }}"
-              }
-            }
-          ]
-        }' ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
-
-    # #Notify Discord Channel
-    # - name: Error Discord Notification
-    #   if: ${{ failure() }}
-    #   uses: rjstone/discord-webhook-notify@v1
-    #   with:
-    #       severity: error
-    #       details: Go Tests Fail
-    #       webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
-
-
+    - name: TDD Error Discord
+      if: ${{ failure() }}
+      uses: rjstone/discord-webhook-notify@v1
+      with:
+          severity: error
+          details: Go Unit Tests Fails
+          webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
+          
   Test_BDD:
     name: Testing BDD
-    needs: Build_SetUp_and_Test_TDD
+    needs: Test_TDD
     if: ${{ success() }}
     runs-on: ubuntu-latest
     services:
@@ -91,7 +77,7 @@ jobs:
         docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SHOW DATABASES;"'
         docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "USE record_db; SHOW TABLES;"'
 
-    - name: Checkout Test Repo
+    - name: Checkout Testing Repository
       uses: actions/checkout@v2
       with:
         repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Testing
@@ -115,16 +101,28 @@ jobs:
           **Please investigate and address the failures.**
         assignees: luketeran, ${{ github.actor }}
 
-
     #Notify Discord Channel
-    - name: Error Discord Notification
+    - name: BDD Error Discord
       if: ${{ failure() }}
       uses: rjstone/discord-webhook-notify@v1
       with:
           severity: error
           details: Behaviour Tests Fail
           webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
-        
+
+    - name: Successful Tests Discord 
+      if: ${{ success() }}
+      uses: rjstone/discord-webhook-notify@v1
+      with:
+          severity: info
+          color: '#ff00aa'
+          username: Mr CI
+          avatarUrl: https://www.pngwing.com/en/free-png-yxnja
+          description: All Tests Passed in ${{ github.workflow }} Workflow from ${{ github.ref_name }}
+          details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+          footer: By ${{ github.actor }}
+          webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
+      
     - name: Upload BDD Test Report
       if: always()
       uses: actions/upload-artifact@v1
@@ -148,19 +146,3 @@ jobs:
       uses: joonvena/robotframework-reporter-action@v2.3
       with:
         gh_access_token: ${{ secrets.GITHUB_TOKEN }}
-        
-  Notify_Discord:
-    runs-on: ubuntu-latest
-    needs: BDD_Report
-    steps:
-      - name: Successful Discord Notification
-        uses: rjstone/discord-webhook-notify@v1
-        with:
-            severity: info
-            color: '#ff00aa'
-            username: Mr CI
-            avatarUrl: https://www.pngwing.com/en/free-png-yxnja
-            description: Success ${{ github.workflow }} Workflow from ${{ github.ref_name }}
-            details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
-            footer: By ${{ github.actor }}
-            webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
