@@ -106,7 +106,7 @@ jobs:
         id: changed-markdown-files
         uses: tj-actions/changed-files@v42
         env:
-          ALL_CHANGED_FILES: ${{ steps.changed-markdown-files.outputs.all_changed_files 
+          ALL_CHANGED_FILES: ${{ steps.changed-markdown-files.outputs.all_changed_files }}
 
       - name: Prepare Files
         run: |
