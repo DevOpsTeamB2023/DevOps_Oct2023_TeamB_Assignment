@@ -1,4 +1,4 @@
-#Trigger when there is a push
+#Trigger when there is a push to branches
 name: Continuous Integration
 on:
   push:
@@ -68,32 +68,26 @@ jobs:
           severity: error
           details: Go Unit Tests Fails
           webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
-          
+
+    - name: Generate Coverage Profile
+      run: |
+        go test -coverprofile=coverage.out ./...
+        go tool cover -html=coverage.out -o coverage.html
+        coverage_percentage=$(go tool cover -func=coverage.out | tail -1 | awk '{print $NF}')
+
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: coverage.html
+
+
   Test_BDD:
     name: Testing BDD
     needs: Test_TDD
     if: ${{ success() }}
     runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: koayyiting/mysql_test:latest
-        ports:
-          - 3306:3306
-        env:
-          MYSQL_ROOT_PASSWORD: can_we_still_score_for_dop
     steps:
-    # Build and Run MySQL Container and Detach
-    - name: Start MySQL Container
-      run: docker run --name mysql_container -d koayyiting/mysql_test:latest
-
-    # Test DB if Working
-    - name: Wait MySQL To Start
-      run: |
-        sleep 10
-        
-        docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SHOW DATABASES;"'
-        docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "USE record_db; SHOW TABLES;"'
-
     - name: Checkout Testing Repository
       uses: actions/checkout@v2
       with:
