@@ -77,12 +77,12 @@ jobs:
         assignees: luketeran, ${{ github.actor }}
 
     #Notify Discord Channel
-    - name: Request Change Discord
+    - name: BDD Fail Discord
       run: |
         curl -X POST -H "Content-Type: application/json" -d '{
           "embeds": [
             {
-              "title": " BDD Fail for **PR #${{ github.event.number }}: ${{ github.event.pull_request.title }}**",
+              "title": "Behaviour Tests Failings for **PR #${{ github.event.number }}: ${{ github.event.pull_request.title }}**",
               "description": " Please review and address the fail tests for PR #${{ github.event.number }}.\nSee details on GitHub: https://github.com/${{ github.repository }}/pull/{{ github.event.number }}",
               "color": #ec9733,
               "footer": {
