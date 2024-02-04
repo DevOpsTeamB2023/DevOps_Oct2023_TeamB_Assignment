@@ -1,0 +1,205 @@
+#Release/Deployment 
+name: Release/Deployment  
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  # Set up necessary installs
+  Test_TDD:
+    name: Build Set Up and Test TDD
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set Up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21.x'
+        cache-dependency-path: subdir/go.sum
+
+    - name: Checkout Development Repository
+      uses: actions/checkout@v4
+      
+    - name: Install Dependencies
+      run: |
+        go mod download
+
+    #CD Workflow Fail
+    - name: Create Issue for Failed Workflow
+      if: ${{ failure() }}
+      uses: dacbd/create-issue-action@main
+      with:
+        token: ${{ github.token }}
+        title: "${{ github.workflow }} Failed"
+        assignees: lacsadoshaniahsantiago, koayyiting
+
+    - name: Workflow Fail Discord
+      if: ${{ failure() }}
+      uses: rjstone/discord-webhook-notify@v1
+      with:
+          severity: info
+          username: Mr CD
+          avatarUrl: https://i.pinimg.com/originals/29/41/9a/29419ac1f185de6a80ce390e66e35f88.gif
+          color: '#ff00aa'
+          description: ${{ github.workflow }} failed.
+          details: 'Please review workflow and make changes!'
+          webhookUrl: ${{ secrets.CD_DISCORD_WEBHOOK_URL }}
+
+    # TDD Test
+    - uses: actions/checkout@v4
+    - name: Run TDD Test
+      uses: robherley/go-test-action@v0.1.0
+
+    # Create Issue on Fail TDD Tests
+    - name: Create Issue on TDD Test Failure
+      if: ${{ failure() }}
+      uses: dacbd/create-issue-action@main
+      with:
+        token: ${{ github.token }}
+        title: "Unit Testing Failings in ${{ github.workflow }} "
+        body: |
+          **Failed tests have been detected.**
+          [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+          **Please investigate and address the failures.**
+        assignees: ${{ github.actor }}
+
+    - name: TDD Error Discord
+      if: ${{ failure() }}
+      uses: rjstone/discord-webhook-notify@v1
+      with:
+          severity: error
+          details: Go Unit Tests Fails
+          webhookUrl: ${{ secrets.CD_DISCORD_WEBHOOK_URL }}
+
+    - name: Generate Coverage Profile
+      run: |
+        go test -coverprofile=coverage.out ./...
+        go tool cover -html=coverage.out -o coverage.html
+        coverage_percentage=$(go tool cover -func=coverage.out | tail -1 | awk '{print $NF}')
+
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: coverage.html
+
+
+  Test_BDD:
+    name: Testing BDD
+    needs: Test_TDD
+    if: ${{ success() }}
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Testing Repository
+      uses: actions/checkout@v2
+      with:
+        repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Testing
+
+    # BDD Test
+    - name: Run BDD tests
+      uses: joonvena/robotframework-docker-action@v1.0
+      with:
+        robot_tests_dir: TestCases
+
+   # Create Issue on Fail BDD Tests
+    - name: Create Issue on BDD Test Failure
+      if: ${{ failure() }}
+      uses: dacbd/create-issue-action@main
+      with:
+        token: ${{ github.token }}
+        title: "BDD Fail Tests in ${{ github.workflow }} "
+        body: |
+          **Failed tests have been detected.**
+          [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+          **Please investigate and address the failures.**
+        assignees: luketeran, ${{ github.actor }}
+
+    #Notify Discord Channel
+    - name: BDD Error Discord
+      if: ${{ failure() }}
+      uses: rjstone/discord-webhook-notify@v1
+      with:
+          severity: error
+          details: Behaviour Tests Fail
+          webhookUrl: ${{ secrets.CD_DISCORD_WEBHOOK_URL }}
+
+    - name: Successful Tests Discord 
+      if: ${{ success() }}
+      uses: rjstone/discord-webhook-notify@v1
+      with:
+          severity: info
+          color: '#ff00aa'
+          username: Mr CD
+          avatarUrl: https://i.pinimg.com/originals/29/41/9a/29419ac1f185de6a80ce390e66e35f88.gif
+          description: All Tests Passed in ${{ github.workflow }} Workflow from ${{ github.ref_name }}
+          details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+          footer: By ${{ github.actor }}
+          webhookUrl: ${{ secrets.CD_DISCORD_WEBHOOK_URL }}
+
+    # Display BDD Report in Github Action
+    - name: Upload BDD Test Report
+      if: always()
+      uses: actions/upload-artifact@v1
+      with:
+        name: reports
+        path: reports
+
+    - uses: actions/checkout@v4
+    - name: Download BDD Test Report
+      if: always()
+      uses: actions/download-artifact@v1
+      with:
+        name: reports
+
+    - name: Send BDD Report to Commit
+      if: always()
+      uses: joonvena/robotframework-reporter-action@v2.3
+      with:
+        gh_access_token: ${{ secrets.GITHUB_TOKEN }}
+            
+  #Create Git Release
+  Create_Git_Release:
+    name: Create Git Release
+    needs: [Test_TDD, Test_BDD]
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set environment version
+      run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+    - name: create a release
+      id: create-new-release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      with:
+        tag_name: ${{ env.RELEASE_VERSION }}
+        release_name: Release ${{env.RELEASE_VERSION }}
+          
+    - name: Error Discord Notification
+      if: ${{ failure() }}
+      uses: rjstone/discord-webhook-notify@v1
+      with:
+          severity: error
+          username: Mr CD
+          avatarUrl: https://i.pinimg.com/originals/29/41/9a/29419ac1f185de6a80ce390e66e35f88.gif
+          details: Create Git Release Fail
+          webhookUrl: ${{ secrets.CD_DISCORD_WEBHOOK_URL }}
+
+
+  Notify_Discord:
+    runs-on: ubuntu-latest
+    needs: Create_Git_Release
+    steps:
+      - name: Successful Discord Notification
+        uses: rjstone/discord-webhook-notify@v1
+        with:
+            severity: info
+            color: '#ff00aa'
+            username: Mr CD
+            avatarUrl: https://i.pinimg.com/originals/29/41/9a/29419ac1f185de6a80ce390e66e35f88.gif
+            description: Success ${{ github.workflow }} Workflow from ${{ github.ref_name }}
+            details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
+            footer: By ${{ github.actor }}
+            webhookUrl: ${{ secrets.CD_DISCORD_WEBHOOK_URL }}
+          
