@@ -1,4 +1,4 @@
-#Trigger when there is a push to main
+#Trigger when there is a push
 name: Continuous Integration
 on:
   push:
@@ -42,6 +42,7 @@ jobs:
           details: 'Please review workflow and make changes!'
           webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
 
+    # TDD Test
     - uses: actions/checkout@v4
     - name: Run TDD Test
       uses: robherley/go-test-action@v0.1.0
@@ -82,11 +83,11 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: can_we_still_score_for_dop
     steps:
-    # Build and run MySQL container and detach
+    # Build and Run MySQL Container and Detach
     - name: Start MySQL Container
       run: docker run --name mysql_container -d koayyiting/mysql_test:latest
 
-    # Test DB if working
+    # Test DB if Working
     - name: Wait MySQL To Start
       run: |
         sleep 10
@@ -99,6 +100,7 @@ jobs:
       with:
         repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Testing
 
+    # BDD Test
     - name: Run BDD tests
       uses: joonvena/robotframework-docker-action@v1.0
       with:
@@ -138,7 +140,8 @@ jobs:
           details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
           footer: By ${{ github.actor }}
           webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
-      
+
+    # Display BDD Report in Github Action
     - name: Upload BDD Test Report
       if: always()
       uses: actions/upload-artifact@v1
@@ -158,19 +161,6 @@ jobs:
       uses: joonvena/robotframework-reporter-action@v2.3
       with:
         gh_access_token: ${{ secrets.GITHUB_TOKEN }}
-
-  # BDD_Report:
-  #   name: BDD Report
-  #   needs: Test_BDD
-  #   if: always()
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - uses: actions/checkout@v4
-  #   - name: Download test report
-  #     uses: actions/download-artifact@v1
-  #     with:
-  #       name: reports
-
   #   - name: Send Report to Commit
   #     uses: joonvena/robotframework-reporter-action@v2.3
   #     with:
