@@ -53,7 +53,7 @@ jobs:
       uses: dacbd/create-issue-action@main
       with:
         token: ${{ github.token }}
-        title: "TDD Fail Tests in ${{ github.workflow }} "
+        title: "Unit Testing Failings in ${{ github.workflow }} "
         body: |
           **Failed tests have been detected.**
           [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
@@ -61,7 +61,6 @@ jobs:
           **Please investigate and address the failures.**
         assignees: ${{ github.actor }}
 
-    #Notify Discord Channel
     - name: TDD Error Discord
       if: ${{ failure() }}
       uses: rjstone/discord-webhook-notify@v1
@@ -161,7 +160,3 @@ jobs:
       uses: joonvena/robotframework-reporter-action@v2.3
       with:
         gh_access_token: ${{ secrets.GITHUB_TOKEN }}
-  #   - name: Send Report to Commit
-  #     uses: joonvena/robotframework-reporter-action@v2.3
-  #     with:
-  #       gh_access_token: ${{ secrets.GITHUB_TOKEN }}
