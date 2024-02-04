@@ -27,7 +27,6 @@ jobs:
   #Create Git Release
   Create_Git_Release:
     name: Create Git Release
-    needs: Build_SetUp_and_TDD
     runs-on: ubuntu-latest
     steps:
     - name: Set environment version
