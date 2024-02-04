@@ -42,19 +42,19 @@ jobs:
         run: echo "::set-output name=tag::$(git describe --abbrev=0 --tags)"
 
       - name: Create a release
-        id: create-new-release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.get-latest-tag.outputs.tag }}
-          release_name: Release ${{ steps.get-latest-tag.outputs.tag }}
+        run: |
+          curl -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          -d '{"tag_name": "${{ steps.get-latest-tag.outputs.tag }}", "name": "Release ${{ steps.get-latest-tag.outputs.tag }}"}' \
+          "https://api.github.com/repos/${{ github.repository }}/releases"
           
       - name: Error Discord Notification
         if: ${{ failure() }}
         uses: rjstone/discord-webhook-notify@v1
         with:
             severity: error
+            username: Mr CD
+            avatarUrl: https://storage.googleapis.com/sticker-prod/ZGzWUJw0t69NJRAw1Q8V/4-1.png
             details: Create Git Release Fail
             webhookUrl: ${{ secrets.CD_DISCORD_WEBHOOK_URL }}
 
@@ -69,7 +69,7 @@ jobs:
             severity: info
             color: '#ff00aa'
             username: Mr CD
-            avatarUrl: https://www.pngwing.com/en/free-png-yxnja
+            avatarUrl: https://storage.googleapis.com/sticker-prod/ZGzWUJw0t69NJRAw1Q8V/4-1.png
             description: Success ${{ github.workflow }} Workflow from ${{ github.ref_name }}
             details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
             footer: By ${{ github.actor }}
