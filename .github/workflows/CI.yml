@@ -22,6 +22,25 @@ jobs:
       run: |
         go mod download
 
+    #CI Workflow Fail
+    - name: Create Issue for Failed Workflow
+      if: ${{ failure() }}
+      uses: dacbd/create-issue-action@main
+      with:
+        token: ${{ github.token }}
+        title: "${{ github.workflow }} Failed"
+        assignees: lacsadoshaniahsantiago, koayyiting
+
+    - name: Workflow Fail Discord
+      uses: rjstone/discord-webhook-notify@v1
+      with:
+          severity: info
+          username: Mr CI
+          color: '#ff00aa'
+          description: ${{ github.workflow }} failed.
+          details: 'Please review workflow and make changes!'
+          webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
+
     - uses: actions/checkout@v4
     - name: Run TDD Test
       uses: robherley/go-test-action@v0.1.0
