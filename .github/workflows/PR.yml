@@ -19,7 +19,7 @@ jobs:
         go-version: '1.21.x'
         cache-dependency-path: subdir/go.sum
 
-    # [Edit] Retrieving from Development Repository
+    # Retrieving from Development Repository
     - name: Checkout Development
       uses: actions/checkout@v4
       
@@ -42,7 +42,7 @@ jobs:
       with:
           severity: info
           username: Mr PR
-          color: '#ff00aa'
+          color: '##f85c05'
           description: ${{ github.workflow }} failed.
           details: 'Please review workflow and make changes!'
           webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
@@ -118,7 +118,8 @@ jobs:
       uses: actions/download-artifact@v1
       with:
         name: reports
-  
+    
+    # Display BDD Tests Results in Github Action
     - name: Send Report to Commit
       if: always()
       uses: joonvena/robotframework-reporter-action@v2.3
@@ -226,7 +227,7 @@ jobs:
         with:
             severity: info
             username: Mr PR
-            color: '#32eb39'
+            color: '#1fe008'
             description: Merged PR#${{ github.pull_request.number }}
             footer: By ${{ github.actor }}
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
