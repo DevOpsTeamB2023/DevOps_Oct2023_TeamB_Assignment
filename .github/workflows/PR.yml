@@ -27,7 +27,7 @@ jobs:
       run: |
         go mod download
 
-    #PR Workflow Fail
+    # PR Workflow Fail
     - name: Create Issue for Failed Workflow
       if: ${{ failure() }}
       uses: dacbd/create-issue-action@main
@@ -36,6 +36,7 @@ jobs:
         title: "${{ github.workflow }} Failed"
         assignees: lacsadoshaniahsantiago, koayyiting
 
+    # Notify Discord
     - name: Workflow Fail Discord
       if: ${{ failure() }}
       uses: rjstone/discord-webhook-notify@v1
@@ -46,112 +47,6 @@ jobs:
           description: ${{ github.workflow }} failed.
           details: 'Please review workflow and make changes!'
           webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
-
-    # # TDD Test
-    # - uses: actions/checkout@v4
-    # - name: Run TDD Test
-    #   uses: robherley/go-test-action@v0.1.0
-
-    # # Create Issue on Fail TDD Tests
-    # - name: Create Issue on TDD Test Failure
-    #   if: ${{ failure() }}
-    #   uses: dacbd/create-issue-action@main
-    #   with:
-    #     token: ${{ github.token }}
-    #     title: "Unit Testing Failings in ${{ github.workflow }} "
-    #     body: |
-    #       **Failed tests have been detected.**
-    #       [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          
-    #       **Please investigate and address the failures.**
-    #     assignees: ${{ github.actor }}
-
-    # - name: TDD Error Discord
-    #   if: ${{ failure() }}
-    #   uses: rjstone/discord-webhook-notify@v1
-    #   with:
-    #       severity: error
-    #       details: Go Unit Tests Fails
-    #       webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
-          
-  # Test_BDD:
-  #   name: BDD Test
-  #   needs: Build_SetUp
-  #   if: ${{ success() }}
-  #   runs-on: ubuntu-latest
-  #   services:
-  #     mysql:
-  #       image: koayyiting/mysql_test:latest
-  #       ports:
-  #         - 3306:3306
-  #       env:
-  #         MYSQL_ROOT_PASSWORD: can_we_still_score_for_dop
-  #   steps:
-  #   # Build and run MySQL container and detach
-  #   - name: Start MySQL Container
-  #     run: docker run --name mysql_container -d koayyiting/mysql_test:latest
-
-  #   # Test DB if working
-  #   - name: Wait MySQL To Start
-  #     run: |
-  #       sleep 10
-        
-  #       docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SHOW DATABASES;"'
-  #       docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "USE record_db; SHOW TABLES;"'
-
-  #   - name: Checkout Test Repo
-  #     uses: actions/checkout@v2
-  #     with:
-  #       repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Testing
-
-  #   - name: Run BDD tests
-  #     uses: joonvena/robotframework-docker-action@v1.0
-  #     with:
-  #       robot_tests_dir: TestCases
-
-  #  # Create Issue on Fail BDD Tests
-  #   - name: Create Issue on BDD Test Failure
-  #     if: ${{ failure() }}
-  #     uses: dacbd/create-issue-action@main
-  #     with:
-  #       token: ${{ github.token }}
-  #       title: "BDD Fail Tests in ${{ github.workflow }} "
-  #       body: |
-  #         **Failed tests have been detected.**
-  #         [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-          
-  #         **Please investigate and address the failures.**
-  #       assignees: luketeran, ${{ github.actor }}
-
-  #   #Notify Discord Channel
-  #   - name: BDD Error Discord
-  #     if: ${{ failure() }}
-  #     uses: rjstone/discord-webhook-notify@v1
-  #     with:
-  #         severity: error
-  #         details: Behaviour Tests Fail
-  #         webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
-        
-  #   - name: Upload BDD Test Report
-  #     if: always()
-  #     uses: actions/upload-artifact@v1
-  #     with:
-  #       name: reports
-  #       path: reports
-
-  #   - uses: actions/checkout@v4
-  #   - name: Download test report
-  #     if: always()
-  #     uses: actions/download-artifact@v1
-  #     with:
-  #       name: reports
-    
-  #   # Display BDD Tests Results in Github Action
-  #   - name: Send Report to Commit
-  #     if: always()
-  #     uses: joonvena/robotframework-reporter-action@v2.3
-  #     with:
-  #       gh_access_token: ${{ secrets.GITHUB_TOKEN }}
 
   Requests_AddReviewer:
     name: Adding Reviewer
@@ -185,7 +80,7 @@ jobs:
           re-request-when-changes-requested: true
           re-request-when-approved: true
 
-      #Notify Discord Channel
+      # Notify Discord Channel
       - name: Request Review Discord
         uses: rjstone/discord-webhook-notify@v1
         with:
@@ -211,7 +106,11 @@ jobs:
         id: changed-markdown-files
         uses: tj-actions/changed-files@v42
         env:
-          ALL_CHANGED_FILES: ${{ steps.changed-markdown-files.outputs.all_changed_files }}
+          ALL_CHANGED_FILES: ${{ steps.changed-markdown-files.outputs.all_changed_files 
+
+      - name: Prepare Files
+        run: |
+          files = (${{ steps.changed-markdown-files.outputs.all_changed_files }})
 
       # Create Issue for Request Changes
       - name: Create Issue for Failed Test
@@ -221,7 +120,7 @@ jobs:
           title: "[REQUEST CHANGES] PR#${{ github.event.pull_request.number }} "
           body: |
             **Files Changed -**
-            $(for file in "${{ steps.changed-markdown-files.outputs.all_changed_files }}"; do
+            $(for file in "${files[@]}"; do
               echo "- $file(https://github.com/${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }}/$file)"
             done)
             
