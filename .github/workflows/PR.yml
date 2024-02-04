@@ -193,10 +193,10 @@ jobs:
             username: Mr PR
             color: '#ff00aa'
             text: "Peer Review"
-            content: '<@TECH LEAD>'
+            content: ''
             details: |
-                'Please review pull request.
-                More details: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
+                Requesting feedback review on modified code.
+                More details:https://github.com/${{ github.repository }}/pull/${{ github.event.number }}
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
           
   RequestChange_Review:
