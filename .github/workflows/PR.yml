@@ -153,7 +153,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request_review' && github.event.review.state == 'approved' }}
     steps:
-      - name: Request Review Discord
+      - name: Approved Review Discord
         uses: rjstone/discord-webhook-notify@v1
         with:
             severity: info
@@ -162,7 +162,7 @@ jobs:
             avatarUrl: https://c4.wallpaperflare.com/wallpaper/124/949/180/despicable-me-gru-despicable-me-wallpaper-preview.jpg
             description: Approved Peer Review
             details: 'Approved peer review on PR#${{ github.event.number }}. For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
-            text: Peer Reviewed Result
+            text: Reviewed - Approved
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
             
       - name: Merge Pull Request
@@ -189,7 +189,7 @@ jobs:
             username: Mr PR
             color: '#00ff00'
             avatarUrl: https://c4.wallpaperflare.com/wallpaper/124/949/180/despicable-me-gru-despicable-me-wallpaper-preview.jpg
-            description: Merged PR#${{ github.event.number }}
-            details: 'https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
-            footer: By ${{ github.actor }}
+            description: Merged PR#${{ github.event.pull_request.number }}
+            details: 'https://github.com/${{ github.repository }}/pull/${{ github.pull_request.number }}'
+            footer: By ${{ github.event.pull_request.user.login }}
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
