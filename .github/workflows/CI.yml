@@ -5,8 +5,8 @@ on:
   
 jobs:
   # Set up necessary installs
-  Build_SetUp:
-    name: Build Set Up
+  Test_TDD:
+    name: Build Set Up and Test TDD
     runs-on: ubuntu-latest
     steps:
     - name: Set Up Go
@@ -22,10 +22,6 @@ jobs:
       run: |
         go mod download
 
-  Test_TDD:
-    name: Testing TDD
-    runs-on: ubuntu-latest
-    steps:
     - uses: actions/checkout@v4
     - name: Run TDD Test
       uses: robherley/go-test-action@v0.1.0
@@ -118,7 +114,6 @@ jobs:
           severity: info
           color: '#ff00aa'
           username: Mr CI
-          avatarUrl: https://www.pngwing.com/en/free-png-yxnja
           description: All Tests Passed in ${{ github.workflow }} Workflow from ${{ github.ref_name }}
           details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
           footer: By ${{ github.actor }}
