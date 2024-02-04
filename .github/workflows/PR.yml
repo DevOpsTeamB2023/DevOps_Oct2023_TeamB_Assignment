@@ -194,7 +194,7 @@ jobs:
             color: '#ff00aa'
             text: Review 
             description: Awaiting For Peer Review
-            details: 'Please review pull request.\n More details: https://github.com/${{ github.repository }}/pull/{{ github.event.number }}'
+            details: 'Please review pull request.\n More details: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
           
   RequestChange_Review:
