@@ -32,7 +32,7 @@ jobs:
       uses: dacbd/create-issue-action@main
       with:
         token: ${{ github.token }}
-        title: "TDD Fail Tests in ${{ github.workflow }} "
+        title: "Unit Testing Failings in ${{ github.workflow }} "
         body: |
           **Failed tests have been detected.**
           [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
@@ -41,14 +41,27 @@ jobs:
         assignees: ${{ github.actor }}
 
     #Notify Discord Channel
-    - name: Error Discord Notification
-      if: ${{ failure() }}
-      uses: rjstone/discord-webhook-notify@v1
-      with:
-          severity: error
-          details: Go Tests Fail
-          webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
+    - name: TDD Error Discord Notification
+      run: |
+        curl -X POST -H "Content-Type: application/json" -d '{
+          "embeds": [
+            {
+              "title": "⚠️ Unit Testing Fails in ${{ github.workflow }}!",
+              "description": "One or more tests have failed in the CI pipeline. Please investigate and address the issues.\n More Details: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "color": 0xe74c3c,
+              "footer": {
+                "text": "Workflow: ${{ github.workflow }} | Branch: ${{ github.ref }} | Timestamp: ${{ github.event.created_at }}"
+              }
+            }
+          ]
+        }' ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
 
+      # if: ${{ failure() }}
+      # uses: rjstone/discord-webhook-notify@v1
+      # with:
+      #     severity: error
+      #     details: Go Tests Fail
+      #     webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
 
   Test_BDD:
     name: Testing BDD
@@ -101,13 +114,27 @@ jobs:
 
 
     #Notify Discord Channel
-    - name: Error Discord Notification
-      if: ${{ failure() }}
-      uses: rjstone/discord-webhook-notify@v1
-      with:
-          severity: error
-          details: Behaviour Tests Fail
-          webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
+    - name: BDD Fail Discord Notification
+      run: |
+        curl -X POST -H "Content-Type: application/json" -d '{
+          "embeds": [
+            {
+              "title": "⚠️ Behaviour Tests Fails in ${{ github.workflow }}!",
+              "description": "One or more tests have failed in the CI pipeline. Please investigate and address the issues.\n More Details: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "color": 0xe74c3c,
+              "footer": {
+                "text": "Workflow: ${{ github.workflow }} | Branch: ${{ github.ref }} | Timestamp: ${{ github.event.created_at }}"
+              }
+            }
+          ]
+        }' ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
+
+      # if: ${{ failure() }}
+      # uses: rjstone/discord-webhook-notify@v1
+      # with:
+      #     severity: error
+      #     details: Behaviour Tests Fail
+      #     webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
         
     - name: Upload BDD Test Report
       if: always()
