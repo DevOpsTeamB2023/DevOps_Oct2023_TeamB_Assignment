@@ -68,12 +68,10 @@ jobs:
         go test -coverprofile=coverage.out ./...
         go tool cover -html=coverage.out -o coverage.html
         echo "Microservice Coverage:" >> $GITHUB_STEP_SUMMARY
-        # Extract summary coverage for account microservice
-        account_summary=$(go tool cover -func=coverage.out | grep "DevOps_Oct2023_TeamB_Assignment/microservices/account" | tail -1)
-        echo "  - DevOps_Oct2023_TeamB_Assignment/microservices/account: $account_summary" >> $GITHUB_STEP_SUMMARY
-        # Extract summary coverage for record microservice
-        record_summary=$(go tool cover -func=coverage.out | grep "DevOps_Oct2023_TeamB_Assignment/microservices/record" | tail -1)
-        echo "  - DevOps_Oct2023_TeamB_Assignment/microservices/record: $record_summary" >> $GITHUB_STEP_SUMMARY
+        # Extract summary coverage for each microservice using regular expressions
+        coverage_summary=$(go test -coverprofile=coverage.out ./... | grep -Po "(?<=ok  \s)\S+\s+\S+\s+\S+\s+coverage: \S+")
+        echo "$coverage_summary" >> $GITHUB_STEP_SUMMARY
+
 
     - name: Upload Coverage Report
       uses: actions/upload-artifact@v3
