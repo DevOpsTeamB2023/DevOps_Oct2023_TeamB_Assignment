@@ -57,11 +57,11 @@ jobs:
       - name: Discord Notification
         uses: rjstone/discord-webhook-notify@v1
         with:
-          severity: ${{ if(eq(needs.Create_Git_Release.result, 'success'), 'info', 'error') }}
-          color: ${{ if(eq(needs.Create_Git_Release.result, 'success'), '#00ff00', '#ff0000') }}
+          severity: ${{ env.DISCORD_SEVERITY }}
+          color: ${{ env.DISCORD_COLOR }}
           username: Mr CD
           avatarUrl: https://www.pngwing.com/en/free-png-yxnja
-          description: ${{ if(eq(needs.Create_Git_Release.result, 'success'), 'Success', 'Failure') }} in ${{ github.workflow }} Workflow from ${{ github.ref_name }}
+          description: ${{ if(eq(needs.Create_Git_Release.outputs.step_result, 'success'), 'Success', 'Failure') }} in ${{ github.workflow }} Workflow from ${{ github.ref_name }}
           details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
           footer: By ${{ github.actor }}
           webhookUrl: ${{ secrets.CD_DISCORD_WEBHOOK_URL }}
