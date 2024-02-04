@@ -41,13 +41,29 @@ jobs:
         assignees: ${{ github.actor }}
 
     #Notify Discord Channel
-    - name: Error Discord Notification
-      if: ${{ failure() }}
-      uses: rjstone/discord-webhook-notify@v1
-      with:
-          severity: error
-          details: Go Tests Fail
-          webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
+    - name: BDD Fail Discord
+      run: |
+        curl -X POST -H "Content-Type: application/json" -d '{
+          "embeds": [
+            {
+              "title": "⚠️ Behaviour Tests Failed in CI",
+              "description": "One or more tests have failed in the CI pipeline. Please investigate and address the issues.",
+              "color": 0xe74c3c,
+              "footer": {
+                "text": "Workflow: ${{ github.workflow }} | Branch: ${{ github.ref }} | Timestamp: ${{ github.event.created_at }}"
+              }
+            }
+          ]
+        }' ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
+
+    # #Notify Discord Channel
+    # - name: Error Discord Notification
+    #   if: ${{ failure() }}
+    #   uses: rjstone/discord-webhook-notify@v1
+    #   with:
+    #       severity: error
+    #       details: Go Tests Fail
+    #       webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
 
 
   Test_BDD:
