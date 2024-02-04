@@ -15,6 +15,13 @@ jobs:
   Build_SetUp_and_TDD:
     name: Build SetUp
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: koayyiting/mysql_test:latest
+        ports:
+          - 3306:3306
+        env:
+          MYSQL_ROOT_PASSWORD: can_we_still_score_for_dop
     steps:
     - name: Set Up Go
       uses: actions/setup-go@v5  # Setup Go after checkout
@@ -27,6 +34,7 @@ jobs:
   #Create Git Release
   Create_Git_Release:
     name: Create Git Release
+    needs: Build_SetUp_and_TDD
     runs-on: ubuntu-latest
     steps:
     - name: Set environment version
