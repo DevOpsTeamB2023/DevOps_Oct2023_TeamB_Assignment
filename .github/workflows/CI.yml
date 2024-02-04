@@ -63,15 +63,33 @@ jobs:
       #     severity: error
       #     details: Go Tests Fail
       #     webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
-    - name: Generate Coverage Profile
-      run: |
-        go test -coverprofile=coverage.out ./...
-        go tool cover -html=coverage.out -o coverage.html
-        echo "Microservice Coverage:" >> $GITHUB_STEP_SUMMARY
-        # Extract summary coverage for each microservice using regular expressions
-        coverage_summary=$(go test -coverprofile=coverage.out ./... | grep -Po "(?<=ok  \s)\S+\s+\S+\s+\S+\s+coverage: \S+")
-        echo "$coverage_summary" >> $GITHUB_STEP_SUMMARY
 
+    # - name: Generate Coverage Profile
+    #   run: |
+    #     go test -coverprofile=coverage.out ./...
+    #     go tool cover -html=coverage.out -o coverage.html
+    #     coverage_percentage=$(go tool cover -func=coverage.out | tail -1 | awk '{print $NF}')
+    #     echo "Test coverage: $coverage_percentage" >> $GITHUB_STEP_SUMMARY
+    #     echo "##[set-output name=badge;]https://img.shields.io/badge/coverage-$coverage_percentage-success?style=flat-square"
+
+    - name: Generate Coverage Profiles
+      run: |
+        # Loop through microservice directories
+        for dir in $(find DevOps_Oct2023_TeamB_Assignment/microservices -mindepth 1 -maxdepth 1 -type d); do
+          # Extract microservice name from directory
+          microservice_name=$(basename "$dir")
+          
+          # Change directory and run tests
+          cd "$dir"
+          go test -coverprofile="${microservice_name}_coverage.out" ./...
+
+          # Generate HTML report and extract coverage percentage
+          go tool cover -html="${microservice_name}_coverage.out" -o "${microservice_name}_coverage.html"
+          coverage_percentage=$(go tool cover -func="${microservice_name}_coverage.out" | tail -1 | awk '{print $NF}')
+
+          # Add coverage information to job summary
+          echo "**${microservice_name} Microservice Coverage:** $coverage_percentage" >> $GITHUB_STEP_SUMMARY
+        done
 
     - name: Upload Coverage Report
       uses: actions/upload-artifact@v3
