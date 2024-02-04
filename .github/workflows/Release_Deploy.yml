@@ -58,9 +58,9 @@ jobs:
         with:
             severity: info
             color: '#ff00aa'
-            username: Mr CI
+            username: Mr CD
             avatarUrl: https://www.pngwing.com/en/free-png-yxnja
             description: Success ${{ github.workflow }} Workflow from ${{ github.ref_name }}
             details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
             footer: By ${{ github.actor }}
-            webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
+            webhookUrl: ${{ secrets.CD_DISCORD_WEBHOOK_URL }}
