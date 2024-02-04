@@ -156,7 +156,7 @@ jobs:
   Requests_AddReviewer:
     name: Adding Reviewer
     # needs: Test_BDD
-    if: ${{ success() }} && github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' #&& ${{ success() }}
     runs-on: ubuntu-latest
     steps:
       - name: Reviewer
@@ -201,7 +201,7 @@ jobs:
     name: Request Change
     needs: Requests_AddReviewer
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_review' && github.event.review.state == 'changes_requested'
+    if: github.event.review.state == 'changes_requested'
     steps:
       # Review Request for Changes Workflow
       - uses: actions/checkout@v4
@@ -231,14 +231,14 @@ jobs:
             ${{ github.event.review.body }}
           assignees: ${{ github.event.pull_request.user.login }}
           
-      - name: Request Review Discord
+      - name: Request Changes Review Discord
         uses: rjstone/discord-webhook-notify@v1
         with:
             severity: info
             username: Mr PR
             color: '#ff00aa'
-            description: Awaiting Peer Review
-            details: 'Requesting feedback review on modified code. For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
+            description: Changes Requested
+            details: 'Peer review requested for changes on PR#${{ github.event.number }} on modified code. For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
             text: Peer Reviewed
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
             
