@@ -87,6 +87,7 @@ jobs:
             severity: info
             username: Mr PR
             color: '#ff00aa'
+            avatarUrl: https://i.pinimg.com/originals/4f/c4/9d/4fc49d8cd11a5e5d2518c379fe67c027.jpg
             description: Awaiting For Peer Review
             details: 'Requesting feedback review on modified code. For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
             text: Peer Review
@@ -143,10 +144,11 @@ jobs:
         with:
             severity: info
             username: Mr PR
-            color: '#ff00aa'
+            color: '#ffff00'
+            avatarUrl: https://i.pinimg.com/736x/4e/2c/f7/4e2cf762ea971f37d6d561b0c7cdcc64.jpg
             description: Changes Requested
             details: 'Peer review requested for changes on PR#${{ github.event.number }} on modified code. For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-            text: Peer Reviewed
+            text: Reviewed - Change Request
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
             
           
@@ -161,6 +163,7 @@ jobs:
             severity: info
             username: Mr PR
             color: '#00ff00'
+            avatarUrl: https://c4.wallpaperflare.com/wallpaper/124/949/180/despicable-me-gru-despicable-me-wallpaper-preview.jpg
             description: Approved Peer Review
             details: 'Approved peer review on PR#${{ github.event.number }}. For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
             text: Peer Reviewed Result
@@ -188,7 +191,9 @@ jobs:
         with:
             severity: info
             username: Mr PR
-            color: '#1fe008'
+            color: '#00ff00'
+            avatarUrl: https://c4.wallpaperflare.com/wallpaper/124/949/180/despicable-me-gru-despicable-me-wallpaper-preview.jpg
             description: Merged PR#${{ github.event.number }}
+            details: 'https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
             footer: By ${{ github.actor }}
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
