@@ -189,7 +189,7 @@ jobs:
             username: Mr PR
             color: '#00ff00'
             avatarUrl: https://c4.wallpaperflare.com/wallpaper/124/949/180/despicable-me-gru-despicable-me-wallpaper-preview.jpg
-            description: Merged PR#${{ github.event.number }}
-            details: 'https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
-            footer: By ${{ github.actor }}
+            description: Merged PR#${{ github.event.pull_request.number }}
+            details: 'https://github.com/${{ github.repository }}/pull/${{ github.pull_request.number }}'
+            footer: By ${{ github.event.pull_request.user.login }}
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
