@@ -199,9 +199,8 @@ jobs:
           
   RequestChange_Review:
     name: Request Change
-    needs: Requests_AddReviewer
     runs-on: ubuntu-latest
-    if: github.event.review.state == 'changes_requested'
+    if: ${{ github.event.review.state == 'changes_requested' }}
     steps:
       # Review Request for Changes Workflow
       - uses: actions/checkout@v4
@@ -245,9 +244,8 @@ jobs:
           
   Approved_Review:
     name: Approved Review
-    needs: Requests_AddReviewer
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request_review' && github.event.review.state == 'approved'
+    if: ${{ github.event_name == 'pull_request_review' && github.event.review.state == 'approved' }}
     steps:
       - name: Request Review Discord
         uses: rjstone/discord-webhook-notify@v1
