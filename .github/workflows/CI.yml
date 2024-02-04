@@ -81,25 +81,25 @@ jobs:
     needs: Build_SetUp_and_Test_TDD
     if: ${{ success() }}
     runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: koayyiting/mysql_test:latest
-        ports:
-          - 3306:3306
-        env:
-          MYSQL_ROOT_PASSWORD: can_we_still_score_for_dop
+    # services:
+    #   mysql:
+    #     image: koayyiting/mysql_test:latest
+    #     ports:
+    #       - 3306:3306
+    #     env:
+    #       MYSQL_ROOT_PASSWORD: can_we_still_score_for_dop
     steps:
-    # Build and run MySQL container and detach
-    - name: Start MySQL Container
-      run: docker run --name mysql_container -d koayyiting/mysql_test:latest
+    # # Build and run MySQL container and detach
+    # - name: Start MySQL Container
+    #   run: docker run --name mysql_container -d koayyiting/mysql_test:latest
 
-    # Test DB if working
-    - name: Wait MySQL To Start
-      run: |
-        sleep 10
+    # # Test DB if working
+    # - name: Wait MySQL To Start
+    #   run: |
+    #     sleep 10
         
-        docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SHOW DATABASES;"'
-        docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "USE record_db; SHOW TABLES;"'
+    #     docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SHOW DATABASES;"'
+    #     docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "USE record_db; SHOW TABLES;"'
 
     - name: Checkout Test Repo
       uses: actions/checkout@v2
