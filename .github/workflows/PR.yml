@@ -112,7 +112,7 @@ jobs:
       - name: Prepare Files
         id: issue_body
         run: |
-          for file in ${ALL_CHANGED_FILES}; do
+          for file in "${ALL_CHANGED_FILES}"; do
             COMMENTBODY="${file} - [Code Change](${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }}/$file)\n"
           done
           echo "COMMENTBODY=$COMMENTBODY" >> $GITHUB_ENV
@@ -128,7 +128,8 @@ jobs:
             **Files Changed -**
             ${{ steps.changed-markdown-files.outputs.all_changed_files }}
             ${{ steps.issue_body.outputs.commentbody }}
-            
+
+            [View File Changes on Github](https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}/files)
             [View Code on GitHub](https://github.com/${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }})
             
             **Peer Comment -**
