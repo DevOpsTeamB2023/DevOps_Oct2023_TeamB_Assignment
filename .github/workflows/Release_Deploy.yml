@@ -39,14 +39,23 @@ jobs:
     steps:
       - name: Get Latest Commit Tag
         id: get-latest-tag
-        run: echo "::set-output name=tag::$(git describe --abbrev=0 --tags)"
+        run: |
+          TAG=$(git describe --abbrev=0 --tags)
+          echo "Latest Tag: $TAG"
+          echo "::set-output name=tag::$TAG"
+
+      - name: Debug Info
+        run: |
+          echo "GitHub Repository: ${GITHUB_REPOSITORY}"
+          echo "GitHub Token: ${GITHUB_TOKEN}"
 
       - name: Create a release
         run: |
+          echo "Creating release for Tag: ${{ steps.get-latest-tag.outputs.tag }}"
           curl -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
           -H "Content-Type: application/json" \
           -d '{"tag_name": "${{ steps.get-latest-tag.outputs.tag }}", "name": "Release ${{ steps.get-latest-tag.outputs.tag }}"}' \
-          "https://api.github.com/repos/${{ github.repository }}/releases"
+          "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases"
           
       - name: Error Discord Notification
         if: ${{ failure() }}
@@ -54,7 +63,7 @@ jobs:
         with:
             severity: error
             username: Mr CD
-            avatarUrl: https://storage.googleapis.com/sticker-prod/ZGzWUJw0t69NJRAw1Q8V/4-1.png
+            avatarUrl: https://media.tenor.com/75ifF6JgtK0AAAAM/chiikawa-snatch-chiikawa.gif
             details: Create Git Release Fail
             webhookUrl: ${{ secrets.CD_DISCORD_WEBHOOK_URL }}
 
@@ -69,7 +78,7 @@ jobs:
             severity: info
             color: '#ff00aa'
             username: Mr CD
-            avatarUrl: https://storage.googleapis.com/sticker-prod/ZGzWUJw0t69NJRAw1Q8V/4-1.png
+            avatarUrl: https://media.tenor.com/75ifF6JgtK0AAAAM/chiikawa-snatch-chiikawa.gif
             description: Success ${{ github.workflow }} Workflow from ${{ github.ref_name }}
             details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
             footer: By ${{ github.actor }}
