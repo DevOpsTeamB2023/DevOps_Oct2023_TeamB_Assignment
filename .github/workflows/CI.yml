@@ -38,6 +38,7 @@ jobs:
           severity: info
           username: Mr CI
           color: '#ff00aa'
+          avatarUrl: https://i.pinimg.com/736x/ce/81/32/ce8132781fe0e65ce08048395049648c.jpg
           description: ${{ github.workflow }} failed.
           details: 'Please review workflow and make changes!'
           webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
@@ -129,6 +130,7 @@ jobs:
           severity: info
           color: '#ff00aa'
           username: Mr CI
+          avatarUrl: https://i.pinimg.com/736x/ce/81/32/ce8132781fe0e65ce08048395049648c.jpg
           description: All Tests Passed in ${{ github.workflow }} Workflow from ${{ github.ref_name }}
           details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
           footer: By ${{ github.actor }}
