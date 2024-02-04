@@ -192,7 +192,7 @@ jobs:
             severity: info
             username: Mr PR
             color: '#ff00aa'
-            text: "Peer Review"
+            text: Peer Review
             details: |
                 Requesting feedback review on modified code.
                 For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}
