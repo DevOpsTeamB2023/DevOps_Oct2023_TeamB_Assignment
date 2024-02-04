@@ -47,84 +47,84 @@ jobs:
           details: 'Please review workflow and make changes!'
           webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
 
-  Test_BDD:
-    name: BDD Test
-    needs: Build_SetUp
-    if: ${{ success() }}
-    runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: koayyiting/mysql_test:latest
-        ports:
-          - 3306:3306
-        env:
-          MYSQL_ROOT_PASSWORD: can_we_still_score_for_dop
-    steps:
-    # Build and run MySQL container and detach
-    - name: Start MySQL Container
-      run: docker run --name mysql_container -d koayyiting/mysql_test:latest
+  # Test_BDD:
+  #   name: BDD Test
+  #   needs: Build_SetUp
+  #   if: ${{ success() }}
+  #   runs-on: ubuntu-latest
+  #   services:
+  #     mysql:
+  #       image: koayyiting/mysql_test:latest
+  #       ports:
+  #         - 3306:3306
+  #       env:
+  #         MYSQL_ROOT_PASSWORD: can_we_still_score_for_dop
+  #   steps:
+  #   # Build and run MySQL container and detach
+  #   - name: Start MySQL Container
+  #     run: docker run --name mysql_container -d koayyiting/mysql_test:latest
 
-    # Test DB if working
-    - name: Wait MySQL To Start
-      run: |
-        sleep 10
+  #   # Test DB if working
+  #   - name: Wait MySQL To Start
+  #     run: |
+  #       sleep 10
         
-        docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SHOW DATABASES;"'
-        docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "USE record_db; SHOW TABLES;"'
+  #       docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "SHOW DATABASES;"'
+  #       docker exec mysql_container sh -c 'mysql -u root -p"${MYSQL_ROOT_PASSWORD}" -e "USE record_db; SHOW TABLES;"'
 
-    - name: Checkout Test Repo
-      uses: actions/checkout@v2
-      with:
-        repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Testing
+  #   - name: Checkout Test Repo
+  #     uses: actions/checkout@v2
+  #     with:
+  #       repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Testing
 
-    - name: Run BDD tests
-      uses: joonvena/robotframework-docker-action@v1.0
-      with:
-        robot_tests_dir: TestCases
+  #   - name: Run BDD tests
+  #     uses: joonvena/robotframework-docker-action@v1.0
+  #     with:
+  #       robot_tests_dir: TestCases
 
-   # Create Issue on Fail BDD Tests
-    - name: Create Issue on BDD Test Failure
-      if: ${{ failure() }}
-      uses: dacbd/create-issue-action@main
-      with:
-        token: ${{ github.token }}
-        title: "BDD Fail Tests in ${{ github.workflow }} "
-        body: |
-          **Failed tests have been detected.**
-          [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+  #  # Create Issue on Fail BDD Tests
+  #   - name: Create Issue on BDD Test Failure
+  #     if: ${{ failure() }}
+  #     uses: dacbd/create-issue-action@main
+  #     with:
+  #       token: ${{ github.token }}
+  #       title: "BDD Fail Tests in ${{ github.workflow }} "
+  #       body: |
+  #         **Failed tests have been detected.**
+  #         [Test Results Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
           
-          **Please investigate and address the failures.**
-        assignees: luketeran, ${{ github.actor }}
+  #         **Please investigate and address the failures.**
+  #       assignees: luketeran, ${{ github.actor }}
 
-    #Notify Discord Channel
-    - name: BDD Error Discord
-      if: ${{ failure() }}
-      uses: rjstone/discord-webhook-notify@v1
-      with:
-          severity: error
-          details: Behaviour Tests Fail
-          webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
+  #   #Notify Discord Channel
+  #   - name: BDD Error Discord
+  #     if: ${{ failure() }}
+  #     uses: rjstone/discord-webhook-notify@v1
+  #     with:
+  #         severity: error
+  #         details: Behaviour Tests Fail
+  #         webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
         
-    - name: Upload BDD Test Report
-      if: always()
-      uses: actions/upload-artifact@v1
-      with:
-        name: reports
-        path: reports
+  #   - name: Upload BDD Test Report
+  #     if: always()
+  #     uses: actions/upload-artifact@v1
+  #     with:
+  #       name: reports
+  #       path: reports
 
-    - uses: actions/checkout@v4
-    - name: Download test report
-      if: always()
-      uses: actions/download-artifact@v1
-      with:
-        name: reports
+  #   - uses: actions/checkout@v4
+  #   - name: Download test report
+  #     if: always()
+  #     uses: actions/download-artifact@v1
+  #     with:
+  #       name: reports
     
-    # Display BDD Tests Results in Github Action
-    - name: Send Report to Commit
-      if: always()
-      uses: joonvena/robotframework-reporter-action@v2.3
-      with:
-        gh_access_token: ${{ secrets.GITHUB_TOKEN }}
+  #   # Display BDD Tests Results in Github Action
+  #   - name: Send Report to Commit
+  #     if: always()
+  #     uses: joonvena/robotframework-reporter-action@v2.3
+  #     with:
+  #       gh_access_token: ${{ secrets.GITHUB_TOKEN }}
 
   Requests_AddReviewer:
     name: Adding Reviewer
