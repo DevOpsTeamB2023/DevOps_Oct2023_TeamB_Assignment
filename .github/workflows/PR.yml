@@ -1,0 +1,195 @@
+# Triggered by any pull request to main repository
+name: Pull Request
+
+on:
+  pull_request:
+    branches:
+      - main
+  pull_request_review:
+    types:
+      - submitted
+jobs:
+  Build_SetUp:
+    name: Build SetUp
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set Up Go
+      uses: actions/setup-go@v5  # Setup Go after checkout
+      with:
+        go-version: '1.21.x'
+        cache-dependency-path: subdir/go.sum
+
+    # Retrieving from Development Repository
+    - name: Checkout Development
+      uses: actions/checkout@v4
+      
+    - name: Install Dependencies
+      run: |
+        go mod download
+
+    # PR Workflow Fail
+    - name: Create Issue for Failed Workflow
+      if: ${{ failure() }}
+      uses: dacbd/create-issue-action@main
+      with:
+        token: ${{ github.token }}
+        title: "${{ github.workflow }} Failed"
+        assignees: lacsadoshaniahsantiago, koayyiting
+
+    # Notify Discord
+    - name: Workflow Fail Discord
+      if: ${{ failure() }}
+      uses: rjstone/discord-webhook-notify@v1
+      with:
+          severity: info
+          username: Mr PR
+          color: '#f85c05'
+          description: ${{ github.workflow }} failed.
+          details: 'Please review workflow and make changes!'
+          webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
+
+  Requests_AddReviewer:
+    name: Adding Reviewer
+    # needs: Test_BDD
+    if: github.event_name == 'pull_request' #&& ${{ success() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reviewer
+        id: toadd_reviewers
+        # Defines Reviewer = (default) Technical Lead | Developer review Technical Lead
+        run: |
+          AUTHOR=${{ github.event.pull_request.user.login }}
+          if [ "$AUTHOR" == "koayyiting" ]; then
+            REVIEWERS="ng-zi-yi"
+          else
+            REVIEWERS="koayyiting"
+          fi
+          echo "REVIEWERS=$REVIEWERS" >> $GITHUB_ENV
+          echo " ${REVIEWERS} " 
+
+      # Add Reviewer to Pull Request
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Add Reviewers
+        uses: madrapps/add-reviewers@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          reviewers: ${{ env.REVIEWERS }}
+          re-request-when-changes-requested: true
+          re-request-when-approved: true
+
+      # Notify Discord Channel
+      - name: Request Review Discord
+        uses: rjstone/discord-webhook-notify@v1
+        with:
+            severity: info
+            username: Mr PR
+            color: '#ff00aa'
+            avatarUrl: https://i.pinimg.com/originals/4f/c4/9d/4fc49d8cd11a5e5d2518c379fe67c027.jpg
+            description: Awaiting For Peer Review
+            details: 'Requesting feedback review on modified code. For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
+            text: Peer Review
+            webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
+          
+  RequestChange_Review:
+    name: Request Change
+    runs-on: ubuntu-latest
+    if: ${{ github.event.review.state == 'changes_requested' }}
+    steps:
+      # Review Request for Changes Workflow
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Get Changed Files
+        id: changed-markdown-files
+        uses: tj-actions/changed-files@v42
+        env:
+          ALL_CHANGED_FILES: ${{ steps.changed-markdown-files.outputs.all_changed_files }}
+          
+      - name: Prepare Files
+        id: issue_body
+        run: |
+          for file in ${ALL_CHANGED_FILES}; do
+            COMMENTBODY="${file} - [Code Change](${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }}/$file)\n"
+          done
+          echo "COMMENTBODY=$COMMENTBODY" >> $GITHUB_ENV
+          echo "${COMMENTBODY}"
+
+      # Create Issue for Request Changes
+      - name: Create Issue for Failed Test
+        uses: dacbd/create-issue-action@main
+        with:
+          token: ${{ github.token }}
+          title: "[REQUEST CHANGES] PR#${{ github.event.pull_request.number }} "
+          body: |
+            **Files Changed -**
+            ${{ steps.changed-markdown-files.outputs.all_changed_files }}
+            ${{ steps.issue_body.outputs.commentbody }}
+            
+            [View Code on GitHub](https://github.com/${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }})
+            
+            **Peer Comment -**
+            ${{ github.event.review.body }}
+          assignees: ${{ github.event.pull_request.user.login }}
+          
+      - name: Request Changes Review Discord
+        uses: rjstone/discord-webhook-notify@v1
+        with:
+            severity: info
+            username: Mr PR
+            color: '#ffff00'
+            avatarUrl: https://i.pinimg.com/736x/4e/2c/f7/4e2cf762ea971f37d6d561b0c7cdcc64.jpg
+            description: Changes Requested
+            details: 'Peer review requested for changes on PR#${{ github.event.number }} on modified code. For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
+            text: Reviewed - Change Request
+            webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
+            
+          
+  Approved_Review:
+    name: Approved Review
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request_review' && github.event.review.state == 'approved' }}
+    steps:
+      - name: Request Review Discord
+        uses: rjstone/discord-webhook-notify@v1
+        with:
+            severity: info
+            username: Mr PR
+            color: '#00ff00'
+            avatarUrl: https://c4.wallpaperflare.com/wallpaper/124/949/180/despicable-me-gru-despicable-me-wallpaper-preview.jpg
+            description: Approved Peer Review
+            details: 'Approved peer review on PR#${{ github.event.number }}. For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
+            text: Peer Reviewed Result
+            webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
+            
+      - name: Merge Pull Request
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pullNumber = context.payload.pull_request.number;
+            const baseRef = context.payload.pull_request.base.ref;
+            const headRef = context.payload.pull_request.head.ref;
+
+            github.rest.pulls.merge({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullNumber,
+              commit_title: `Merge PR#${pullNumber} from ${baseRef} to ${headRef}`,
+            });
+
+      - name: Approved Discord
+        if: ${{ success() }}
+        uses: rjstone/discord-webhook-notify@v1
+        with:
+            severity: info
+            username: Mr PR
+            color: '#00ff00'
+            avatarUrl: https://c4.wallpaperflare.com/wallpaper/124/949/180/despicable-me-gru-despicable-me-wallpaper-preview.jpg
+            description: Merged PR#${{ github.event.number }}
+            details: 'https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
+            footer: By ${{ github.actor }}
+            webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
