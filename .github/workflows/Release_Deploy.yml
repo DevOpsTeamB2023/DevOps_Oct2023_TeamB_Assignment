@@ -15,16 +15,7 @@ jobs:
   Build_SetUp_and_TDD:
     name: Build SetUp
     runs-on: ubuntu-latest
-    services:
-      mysql:
-        image: koayyiting/mysql_test:latest
-        ports:
-          - 3306:3306
-        env:
-          MYSQL_ROOT_PASSWORD: can_we_still_score_for_dop
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v2
     - name: Set Up Go
       uses: actions/setup-go@v5  # Setup Go after checkout
       with:
