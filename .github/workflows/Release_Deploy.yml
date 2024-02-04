@@ -50,12 +50,13 @@ jobs:
           tag_name: ${{ steps.get-latest-tag.outputs.tag }}
           release_name: Release ${{ steps.get-latest-tag.outputs.tag }}
           
-      - name: Notify on Failure
-        if: failure()
+      - name: Error Discord Notification
+        if: ${{ failure() }}
         uses: rjstone/discord-webhook-notify@v1
         with:
-          discord-webhook-url: ${{ secrets.CD_DISCORD_WEBHOOK_URL }}
-          content: "Failed to create Git release for tag: ${{ steps.get-latest-tag.outputs.tag }}"
+            severity: error
+            details: Create Git Release Fail
+            webhookUrl: ${{ secrets.CD_DISCORD_WEBHOOK_URL }}
 
 
   Notify_Discord:
