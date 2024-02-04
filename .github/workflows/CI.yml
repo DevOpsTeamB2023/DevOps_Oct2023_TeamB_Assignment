@@ -54,7 +54,7 @@ jobs:
               }
             }
           ]
-        }' ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
+        }' ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
 
     # #Notify Discord Channel
     # - name: Error Discord Notification
