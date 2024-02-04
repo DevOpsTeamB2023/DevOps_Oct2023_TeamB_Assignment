@@ -1,4 +1,4 @@
-#Trigger when there is a push to main
+#Trigger when there is a push to branches
 name: Continuous Integration
 on:
   push:
@@ -121,8 +121,8 @@ jobs:
         curl -X POST -H "Content-Type: application/json" -d '{
           "embeds": [
             {
-              "title": "⚠️ Behaviour Tests Fails in ${{ github.workflow }}!",
-              "description": "One or more tests have failed in the CI pipeline. Please investigate and address the issues.\n More Details: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+              "title": "⚠️ Behaviour Tests Fails in \"${{ github.workflow }}\"!",
+              "description": "One or more tests have failed in the CI pipeline. Please investigate and address the issues.\nMore Details: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
               "color": 0xe74c3c,
               "footer": {
                 "text": "Workflow: ${{ github.workflow }} | Branch: ${{ github.ref }} | Timestamp: ${{ github.event.created_at }}"
