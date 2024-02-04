@@ -37,25 +37,34 @@ jobs:
     needs: Build_SetUp_and_TDD
     runs-on: ubuntu-latest
     steps:
-      - name: Get Latest Commit Tag
-        id: get-latest-tag
-        run: |
-          TAG=$(git describe --abbrev=0 --tags)
-          echo "Latest Tag: $TAG"
-          echo "::set-output name=tag::$TAG"
-
       - name: Debug Info
         run: |
           echo "GitHub Repository: ${GITHUB_REPOSITORY}"
           echo "GitHub Token: ${GITHUB_TOKEN}"
+          echo "Git Config:"
+          git config --list
+
+      - name: List Tags
+        run: git tag -l
+
+      - name: Get Latest Commit Tag
+        id: get-latest-tag
+        run: |
+          TAG=$(git describe --abbrev=0 --tags 2>&1)
+          echo "Latest Tag: $TAG"
+          echo "::set-output name=tag::$TAG"
 
       - name: Create a release
         run: |
-          echo "Creating release for Tag: ${{ steps.get-latest-tag.outputs.tag }}"
-          curl -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Content-Type: application/json" \
-          -d '{"tag_name": "${{ steps.get-latest-tag.outputs.tag }}", "name": "Release ${{ steps.get-latest-tag.outputs.tag }}"}' \
-          "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases"
+          if [ -n "${{ steps.get-latest-tag.outputs.tag }}" ]; then
+            echo "Creating release for Tag: ${{ steps.get-latest-tag.outputs.tag }}"
+            curl -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"tag_name": "${{ steps.get-latest-tag.outputs.tag }}", "name": "Release ${{ steps.get-latest-tag.outputs.tag }}"}' \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases"
+          else
+            echo "No tags found. Unable to create release."
+          fi
           
       - name: Error Discord Notification
         if: ${{ failure() }}
@@ -63,7 +72,7 @@ jobs:
         with:
             severity: error
             username: Mr CD
-            avatarUrl: https://media.tenor.com/75ifF6JgtK0AAAAM/chiikawa-snatch-chiikawa.gif
+            avatarUrl: https://i.pinimg.com/originals/29/41/9a/29419ac1f185de6a80ce390e66e35f88.gif
             details: Create Git Release Fail
             webhookUrl: ${{ secrets.CD_DISCORD_WEBHOOK_URL }}
 
@@ -78,7 +87,7 @@ jobs:
             severity: info
             color: '#ff00aa'
             username: Mr CD
-            avatarUrl: https://media.tenor.com/75ifF6JgtK0AAAAM/chiikawa-snatch-chiikawa.gif
+            avatarUrl: https://i.pinimg.com/originals/29/41/9a/29419ac1f185de6a80ce390e66e35f88.gif
             description: Success ${{ github.workflow }} Workflow from ${{ github.ref_name }}
             details: '(https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})'
             footer: By ${{ github.actor }}
