@@ -2,6 +2,8 @@
 name: Release/Deployment  
 on:
   push:
+    #tags:
+      #- 'v*'
   #workflow_run:
     #workflows:
       #- "PullRequest"
@@ -31,23 +33,21 @@ jobs:
     
   #Create Git Release
   Create_Git_Release:
-    needs: Build_SetUp_and_TDD
     name: Create Git Release
     runs-on: ubuntu-latest
     steps:
-      - name: Get version from text file
-        id: get_version
-        run: |
-          VERSION=$(cat version.txt | sed 's/ //g')
-          echo "::set-output name=version::${VERSION}"
+      - name: Get Latest Commit Tag
+        id: get-latest-tag
+        run: echo "::set-output name=tag::$(git describe --abbrev=0 --tags)"
 
       - name: Create a release
+        id: create-new-release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          release_tag: v${{ steps.get_version.outputs.version }}
         with:
-          tag_name: ${{ env.release_tag }}
+          tag_name: ${{ steps.get-latest-tag.outputs.tag }}
+          release_name: Release ${{ steps.get-latest-tag.outputs.tag }}
           
   Notify_Discord:
     runs-on: ubuntu-latest
