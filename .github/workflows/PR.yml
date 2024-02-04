@@ -112,7 +112,6 @@ jobs:
       - name: Prepare Files
         id: issue_body
         run: |
-          COMMENTBODY = ""
           files=(${{ steps.changed-markdown-files.outputs.all_changed_files }})
           for file in "${files[@]}"; do
             COMMENTBODY="${file_list} - [Changes](${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }}/$file)\n"
