@@ -156,7 +156,7 @@ jobs:
   Requests_AddReviewer:
     name: Adding Reviewer
     # needs: Test_BDD
-    if: ${{ success() }}
+    if: ${{ success() }} && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Reviewer
