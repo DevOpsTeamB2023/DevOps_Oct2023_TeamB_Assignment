@@ -42,11 +42,12 @@ jobs:
 
     #Notify Discord Channel
     - name: TDD Error Discord Notification
+      if: ${{ failure() }}
       run: |
         curl -X POST -H "Content-Type: application/json" -d '{
           "embeds": [
             {
-              "title": "⚠️ Unit Testing Fails in ${{ github.workflow }}!",
+              "title": "⚠️ Unit Tests Fails in ${{ github.workflow }}!",
               "description": "One or more tests have failed in the CI pipeline. Please investigate and address the issues.\n More Details: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}",
               "color": 0xe74c3c,
               "footer": {
