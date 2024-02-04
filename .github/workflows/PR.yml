@@ -221,12 +221,16 @@ jobs:
           title: "[REQUEST CHANGES] PR#${{ github.event.pull_request.number }} "
           body: |
             **Files Changed -**
+            $(for file in "${{ steps.changed-markdown-files.outputs.all_changed_files }}"; do
+              echo "- $file(https://github.com/${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }}/$file)"
+              done)
             
-            [${{ steps.changed-markdown-files.outputs.all_changed_files }}](https://github.com/${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }}/${{ steps.changed-markdown-files.outputs.all_changed_files }})
+            ${{ steps.changed-markdown-files.outputs.all_changed_files }}
+            (https://github.com/${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }}/${{ steps.changed-markdown-files.outputs.all_changed_files }})
             
             [View Code on GitHub](https://github.com/${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }})
             
-            **Comment -**
+            **Peer Comment -**
             ${{ github.event.review.body }}
           assignees: ${{ github.event.pull_request.user.login }}
           
