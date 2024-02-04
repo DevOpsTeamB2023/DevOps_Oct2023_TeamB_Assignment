@@ -63,6 +63,23 @@ jobs:
       #     severity: error
       #     details: Go Tests Fail
       #     webhookUrl: ${{ secrets.CI_DISCORD_WEBHOOK_URL }}
+    - name: Generate Coverage Profile
+      run: |
+        go test -coverprofile=coverage.out ./...
+        go tool cover -html=coverage.out -o coverage.html
+        coverage_percentage=$(go tool cover -func=coverage.out | tail -1 | awk '{print $NF}')
+        echo "Test coverage: $coverage_percentage" >> $GITHUB_STEP_SUMMARY
+        echo "##[set-output name=badge;]https://img.shields.io/badge/coverage-$coverage_percentage-success?style=flat-square"
+
+    - name: Display Coverage Badge
+      run: |
+        echo "Coverage Badge: ${{ steps.generate-coverage.outputs.badge }}" >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: coverage.html
 
   Test_BDD:
     name: Testing BDD
