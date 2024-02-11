@@ -8,9 +8,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func TestCreateAccHandler(t *testing.T) {
@@ -71,6 +74,127 @@ func TestCreateAccHandler(t *testing.T) {
 	defer mock.ExpectationsWereMet() // Ensure expectations are checked even if the test fails early
 }
 
+func TestCreateAccHandler_Unmarhal(t *testing.T) {
+
+	payload, err := json.Marshal("newAcc")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req, err := http.NewRequest("POST", "/api/v1/accounts", bytes.NewBuffer(payload))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a ResponseRecorder to record the response
+	rr := httptest.NewRecorder()
+
+	// Call the handler directly
+	CreateAccHandler(rr, req)
+
+	// Check the status code
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	}
+}
+
+func TestCreateAccHandler_Prepare(t *testing.T) {
+	newAcc := Account{
+		Username:  "testacc",
+		Password:  "testpwd",
+		AccType:   "User",
+		AccStatus: "Pending",
+	}
+	payload, err := json.Marshal(newAcc)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req, err := http.NewRequest("POST", "/api/v1/accounts", bytes.NewBuffer(payload))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a new mock database connection
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	// Replace the actual database connection with the mock
+	SetDB(db)
+
+	// Create a mock MySQL error
+	mockError := &mysql.MySQLError{
+		Number:  1062,                                      // MySQL error number (example)
+		Message: "Duplicate entry 'xyz' for key 'PRIMARY'", // MySQL error message (example)
+	}
+
+	// Mock Prepare to return the mock MySQL error
+	mock.ExpectPrepare("INSERT INTO Account").WillReturnError(mockError)
+
+	// Create a ResponseRecorder to record the response
+	rr := httptest.NewRecorder()
+
+	// Call the handler directly
+	CreateAccHandler(rr, req)
+
+	// Check the status code
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+}
+
+func TestCreateAccHandler_Exec(t *testing.T) {
+	// Create a new instance of sqlmock
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	// Replace your existing db with the mocked one
+	SetDB(db)
+
+	// Create a mock MySQL error
+	mockError := &mysql.MySQLError{
+		Number:  1062,                                      // MySQL error number (example)
+		Message: "Duplicate entry 'xyz' for key 'PRIMARY'", // MySQL error message (example)
+	}
+
+	// Set up expectations for your query
+	mock.ExpectPrepare("INSERT INTO Account").ExpectExec().
+		WithArgs("test_username", "test_password", "test_type", "test_status").
+		WillReturnError(mockError)
+
+	// Create a request with the required payload (JSON encoded)
+	reqBody := `{"username": "test_username", "password": "test_password", "accType": "test_type", "accStatus": "test_status"}`
+	req, err := http.NewRequest("POST", "/your-endpoint", strings.NewReader(reqBody))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a ResponseRecorder to record the response
+	rr := httptest.NewRecorder()
+
+	// Call your handler function with the mocked database
+	CreateAccHandler(rr, req)
+
+	// Check the response status code
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusInternalServerError)
+	}
+
+	// Check the response body
+	expectedBody := "Internal server error\n"
+	if rr.Body.String() != expectedBody {
+		t.Errorf("handler returned unexpected body: got %v want %v",
+			rr.Body.String(), expectedBody)
+	}
+}
+
 func TestGetAccHandler(t *testing.T) {
 	username := "testacc"
 	password := "testpwd"
@@ -120,6 +244,110 @@ func TestGetAccHandler(t *testing.T) {
 	// Verify that the expectations were met
 	if err := mock.ExpectationsWereMet(); err != nil {
 		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestGetAccHandler_Password(t *testing.T) {
+	username := "testacc"
+	password := ""
+	// Create a request with query parameters
+	req, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/accounts?username=%s&password=%s", username, password), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a ResponseRecorder to record the response
+	rr := httptest.NewRecorder()
+
+	// Call your handler function with the request
+	GetAccHandler(rr, req)
+
+	// Check the response status code
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusBadRequest)
+	}
+
+	// Check the response body
+	expectedBody := "Username and Password parameters are required\n"
+	if rr.Body.String() != expectedBody {
+		t.Errorf("handler returned unexpected body: got %v want %v",
+			rr.Body.String(), expectedBody)
+	}
+}
+
+func TestGetAccHandler_Norows(t *testing.T) {
+	username := "testacc"
+	password := "testpwd"
+
+	// Create a new mock database connection
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	// Replace the actual database connection with the mock
+	SetDB(db)
+
+	// Set up the mock expectation for QueryRow to return an empty result set
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT AccID, Username, Password, AccType, AccStatus FROM Account WHERE Username = ? AND Password = ?")).
+		WithArgs(username, password).
+		WillReturnRows(sqlmock.NewRows([]string{"AccID", "Username", "Password", "AccType", "AccStatus"}))
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/accounts?username=%s&password=%s", username, password), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	GetAccHandler(rr, req)
+
+	// Check the response status code
+	if status := rr.Code; status != http.StatusNotFound {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusNotFound)
+	}
+}
+
+func TestGetAccHandler_OtherErr(t *testing.T) {
+	username := "testacc"
+	password := "testpwd"
+
+	// Create a new mock database connection
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	// Replace the actual database connection with the mock
+	SetDB(db)
+
+	// Create a mock MySQL error
+	mockError := &mysql.MySQLError{
+		Number:  1062,                                      // MySQL error number (example)
+		Message: "Duplicate entry 'xyz' for key 'PRIMARY'", // MySQL error message (example)
+	}
+
+	mock.ExpectQuery("SELECT AccID, Username, Password, AccType, AccStatus FROM Account WHERE Username = ? AND Password = ?").
+		WithArgs(username, password).
+		WillReturnError(mockError)
+
+	req, err := http.NewRequest("GET", fmt.Sprintf("/api/v1/accounts?username=%s&password=%s", username, password), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	GetAccHandler(rr, req)
+
+	// Check the response status code
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusInternalServerError)
 	}
 }
 
