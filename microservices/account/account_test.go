@@ -4,6 +4,7 @@ package account
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -676,31 +677,140 @@ func TestAdminCreateAccHandler_Exec(t *testing.T) {
 	}
 }
 
-// func TestDeleteAccHandler(t *testing.T) {
-// 	// accID follows existing account for deletion with AccID=2003 in record_db for testing deletion
-// 	accID := "2003"
+func TestDeleteAccHandler(t *testing.T) {
+	// Create a new mock database connection
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
 
-// 	req, err := http.NewRequest("DELETE", fmt.Sprintf("/api/v1/accounts/delete?accID=%s", accID), nil)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	// Replace the actual database connection with the mock
+	SetDB(db)
 
-// 	rr := httptest.NewRecorder()
+	// Set up expected database query and result for success
+	mock.ExpectPrepare(regexp.QuoteMeta("DELETE FROM Account WHERE AccID = ?")).
+		ExpectExec().
+		WithArgs("2003").
+		WillReturnResult(sqlmock.NewResult(1, 1))
 
-// 	DeleteAccHandler(rr, req)
+	req, err := http.NewRequest("DELETE", "/api/v1/accounts/delete?accID=2003", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// 	if status := rr.Code; status != http.StatusOK {
-// 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
-// 	}
+	rr := httptest.NewRecorder()
 
-// 	// Check the response body
-// 	expected := "Account deleted successfully\n"
-// 	if rr.Body.String() != expected {
-// 		t.Errorf("Handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
-// 	}
-// }
+	// Call the handler
+	DeleteAccHandler(rr, req)
 
-// // not working - request not passing to account.go
+	// Check the status code for success case
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	// Check the response body for success case
+	expected := "Account deleted successfully\n"
+	if rr.Body.String() != expected {
+		t.Errorf("Handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
+	}
+
+	// Verify that the expectations for success were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+
+	// Set up expectations for error when accID is empty
+	req, err = http.NewRequest("DELETE", "/api/v1/accounts/delete", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr = httptest.NewRecorder()
+
+	// Call the handler with empty accID
+	DeleteAccHandler(rr, req)
+
+	// Check the status code for error case
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("Handler returned wrong status code for empty accID case: got %v want %v", status, http.StatusBadRequest)
+	}
+
+	// Check the response body for error case
+	expectedError := "Account ID parameter is required\n"
+	if rr.Body.String() != expectedError {
+		t.Errorf("Handler returned unexpected body for empty accID case: got %v want %v", rr.Body.String(), expectedError)
+	}
+
+	// Verify that the expectations for empty accID were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations for empty accID case: %s", err)
+	}
+
+	// Set up expectations for error when preparing SQL statement
+	mock.ExpectPrepare(regexp.QuoteMeta("DELETE FROM Account WHERE AccID = ?")).
+		WillReturnError(errors.New("sql: statement preparation failed"))
+
+	req, err = http.NewRequest("DELETE", "/api/v1/accounts/delete?accID=2003", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr = httptest.NewRecorder()
+
+	// Call the handler with valid accID but with an error in preparing the SQL statement
+	DeleteAccHandler(rr, req)
+
+	// Check the status code for error case
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("Handler returned wrong status code for SQL statement preparation error case: got %v want %v", status, http.StatusInternalServerError)
+	}
+
+	// Check the response body for error case
+	expectedError = "Internal server error\n"
+	if rr.Body.String() != expectedError {
+		t.Errorf("Handler returned unexpected body for SQL statement preparation error case: got %v want %v", rr.Body.String(), expectedError)
+	}
+
+	// Verify that the expectations for SQL statement preparation error were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations for SQL statement preparation error case: %s", err)
+	}
+
+	// Set up expectations for error when executing SQL statement
+	mock.ExpectPrepare(regexp.QuoteMeta("DELETE FROM Account WHERE AccID = ?")).
+		ExpectExec().
+		WithArgs("2003").
+		WillReturnError(errors.New("sql: execution failed"))
+
+	req, err = http.NewRequest("DELETE", "/api/v1/accounts/delete?accID=2003", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr = httptest.NewRecorder()
+
+	// Call the handler with valid accID but with an error in executing the SQL statement
+	DeleteAccHandler(rr, req)
+
+	// Check the status code for error case
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("Handler returned wrong status code for SQL statement execution error case: got %v want %v", status, http.StatusInternalServerError)
+	}
+
+	// Check the response body for error case
+	expectedError = "Internal server error\n"
+	if rr.Body.String() != expectedError {
+		t.Errorf("Handler returned unexpected body for SQL statement execution error case: got %v want %v", rr.Body.String(), expectedError)
+	}
+
+	// Verify that the expectations for SQL statement execution error were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations for SQL statement execution error case: %s", err)
+	}
+}
+
+// not working - request not passing to account.go
 // func TestUpdateAccHandler(t *testing.T) {
 // 	// accID follows existing account for update with AccID=2005 in record_db for testing update
 // 	accID := "2005"
