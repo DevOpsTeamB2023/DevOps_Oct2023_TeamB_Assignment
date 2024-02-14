@@ -38,6 +38,8 @@
             }
         });
     </script>
+    <script src="../js/javasct.js"></script> 
+
 </head>
 <body>
     <!--NAV BAR-->
@@ -49,17 +51,17 @@
     <!--END NAV BAR-->
     <div class="container-fluid page">
         <!--CREATE FORM-->
-        <form class="row g-3 col-lg-6 offset-lg-3">
+        <form class="row g-3 col-lg-6 offset-lg-3" id="createcapstoneForm">
             <h1>Create New Capstone Entry</h1>
             <div class="col-md-6">
                 <label for="Name" class="form-label">NAME</label>
-                <input type="text" class="form-control" id="name" placeholder="e.g. Tan KK">
+                <input type="text" class="form-control" id="captone_name" placeholder="e.g. Tan KK">
             </div>
             <div class="col-md-6">
                 <label for="capstonetitle" class="form-label">CAPSTONE TITLE</label>
-                <input type="text" class="form-control" id="capstonetitle" placeholder="e.g. Quantum Mechanics">
+                <input type="text" class="form-control" id="captone_capstonetitle" placeholder="e.g. Quantum Mechanics">
             </div>
-            <div class="col-md-2">
+            <div class="col-md-2" id="capstone_roc">
                 <label for="roleOfcontact" class="form-label">ROLE OF CONTACT</label>
                 <div class="form-check">
                     <input class="form-check-input" type="radio" name="flexRadioDefault" id="flexRadioDefault1" value="Staff">
@@ -72,29 +74,29 @@
             </div>
             <div class="col-md-4">
                 <label for="noStudent" class="form-label">NO. OF STUDENT</label>
-                <input type="number" class="form-control" id="noStudent" placeholder="e.g. 4">
+                <input type="number" class="form-control" id="captone_noStudent" placeholder="e.g. 4">
             </div>
             <div class="col-md-6">
                 <label for="companyName" class="form-label">NAME OF COMPANY</label>
-                <input type="text" class="form-control" id="companyName" placeholder="e.g. KK Company">
+                <input type="text" class="form-control" id="captone_companyName" placeholder="e.g. KK Company">
             </div>
             <div class="col-md-2">
                 <!--Empty (For Spacing Purposes)-->
             </div>
             <div class="col-md-4">
                 <label for="academicYear" class="form-label">ACADEMIC YEAR</label>
-                <input type="text" class="form-control" id="academicYear" placeholder="e.g. 2023/24">
+                <input type="text" class="form-control" id="captone_academicYear" placeholder="e.g. 2023/24">
             </div>
             <div class="col-md-6">
                 <label for="companyPOC" class="form-label">NAME OF COMPANY</label>
-                <input type="text" class="form-control" id="companyPOC" placeholder="e.g. Tan BB">
+                <input type="text" class="form-control" id="captone_companyPOC" placeholder="e.g. Tan BB">
             </div>
             <div class="col-md-12">
                 <label for="description" class="form-label">BRIEF DESCRIPTION OF PROJECT</label>
-                <textarea class="form-control" aria-label="description" placeholder="Write Here" ></textarea>
+                <textarea class="form-control" aria-label="description" placeholder="Write Here" id="captone_description"></textarea>
             </div>
             <div class="col-md-6 text-start">
-                <button type="button" class="btn btn-success btn-lg" id="createNewCapstone">SAVE</button>
+                <button type="button" class="btn btn-success btn-lg" onclick="return createCapstone()">SAVE</button>
             </div>
             <div class="col-md-6 text-end">
                 <button type="button" class="btn btn-danger btn-lg" onclick="window.location.href='../templates/admin_main.html'">CANCEL</button>
@@ -102,4 +104,6 @@
         </form>
     </div>
     <!--CREATE FORM END-->
+    <!--SCRIPT-->
+    <script src="../js/javasct.js"></script> 
 </body>
