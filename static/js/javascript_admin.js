@@ -82,7 +82,12 @@ function createCapstone() {
     }
 
     form.reset();
+    window.location.href="../templates/admin_main.html";
 
+}
+
+function capstoneRecords() {
+    
 }
 
 function queryCapstone() {
