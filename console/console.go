@@ -8,6 +8,8 @@ import (
 )
 
 func main() {
-	account.InitHTTPServer()
-	record.InitHTTPServer()
+	go account.InitHTTPServer()
+	go record.InitHTTPServer()
+
+	select {}
 }

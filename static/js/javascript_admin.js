@@ -45,7 +45,7 @@ function createCapstone() {
     console.log(companyContact);
     console.log(projDesc);
 
-    const curl = 'http://localhost:5001/api/v1/records';
+    const curl = 'http://localhost:5002/api/v1/records';
     console.log(curl);
 
     request.open("POST", curl);
@@ -86,8 +86,42 @@ function createCapstone() {
 
 }
 
-function capstoneRecords() {
-    
+function listCapstones() {
+    const url = `http://localhost:5002/api/v1/records/all`;
+    fetch(url)
+        .then(response => {
+            if(!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then( data => {
+            console.log("Data from server: ", data);
+
+            var tableBody = document.getElementById('allcapstone');
+
+            tableBody.innerHTML = '';
+
+            data.forEach(record => {
+                var row = tableBody.insertRow();
+                //Edit the Javascript Function !!!!
+                row.innerHTML = `   <th scope="row">${record.recordId}</th>
+                                    <td>${record.name}</td>
+                                    <td>${record.capstoneTitle}</td>
+                                    <td>${record.roleOfContact}</td>
+                                    <td>${record.noOfStudents}</td>
+                                    <td>${record.companyName}</td>
+                                    <td>${record.companyContact}</td>
+                                    <td>${record.acadYr}</td>
+                                    <td class="description">${record.projDesc}</td>
+                                    <td>
+                                        <button class="btn btn-outline-secondary" onclick="return modifyCapstone(${record.recordId})">Modify</button>
+                                        <button class="btn btn-outline-secondary" onclick="return deleteCapstone(${record.recordId})">Delete</button>
+                                    </td>
+                                `;
+            });
+        })
+        .catch(error => console.error('Error fetching record details: ', error))
 }
 
 function queryCapstone() {

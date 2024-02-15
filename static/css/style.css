@@ -26,3 +26,8 @@ a:active.navbar-brand {
 .page label{
     font-weight: bold;
 }
+
+.page table th.description{
+    display: inline-block;
+    width: 300px;
+}
