@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/go-sql-driver/mysql"
 )
 
 func TestDeleteRecordHandler(t *testing.T) {
@@ -50,6 +51,115 @@ func TestDeleteRecordHandler(t *testing.T) {
 	expected := "Record deleted successfully\n"
 	if rr.Body.String() != expected {
 		t.Errorf("Handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
+	}
+}
+
+func TestDeleteRecordHandler_NoID(t *testing.T) {
+	// accID follows the existing acc with pending status in record_db for testing approval
+	recordID := ""
+
+	// Create a new mock database connection
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	SetDB(db)
+
+	// Set up expectations for the Prepare call
+	mock.ExpectPrepare("DELETE FROM Record WHERE RecordID = ?")
+
+	mock.ExpectExec("DELETE FROM Record WHERE RecordID = ?").WithArgs(sqlmock.AnyArg()).WillReturnResult(sqlmock.NewResult(0, 1))
+
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("/api/v1/records/delete?recordID=%s", recordID), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	DeleteRecordHandler(rr, req)
+
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	}
+}
+
+func TestDeleteRecordHandler_Prepare(t *testing.T) {
+	// Create a new mock database connection
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	SetDB(db)
+
+	// Create a mock MySQL error
+	mockError := &mysql.MySQLError{
+		Number:  1062,                                      // MySQL error number (example)
+		Message: "Duplicate entry 'xyz' for key 'PRIMARY'", // MySQL error message (example)
+	}
+
+	// Mock Prepare to return the mock MySQL error
+	mock.ExpectPrepare("DELETE FROM Record").WillReturnError(mockError)
+
+	// recordID follows existing record for deletion with recordID=4 in record_db for testing deletion
+	recordID := "3"
+
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("/api/v1/records/delete?recordID=%s", recordID), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	// Call the handler directly
+	DeleteRecordHandler(rr, req)
+
+	// Check the status code
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+}
+
+func TestDeleteRecordHandler_Exec(t *testing.T) {
+	// Create a new mock database connection
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	SetDB(db)
+
+	// Create a mock MySQL error
+	mockError := &mysql.MySQLError{
+		Number:  1062,                                      // MySQL error number (example)
+		Message: "Duplicate entry 'xyz' for key 'PRIMARY'", // MySQL error message (example)
+	}
+
+	// Set up expectations for your query
+	mock.ExpectPrepare("DELETE FROM Record").ExpectExec().
+		WillReturnError(mockError)
+
+	// recordID follows existing record for deletion with recordID=4 in record_db for testing deletion
+	recordID := "3"
+
+	req, err := http.NewRequest("DELETE", fmt.Sprintf("/api/v1/records/delete?recordID=%s", recordID), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	// Call the handler directly
+	DeleteRecordHandler(rr, req)
+
+	// Check the status code
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
 	}
 }
 
