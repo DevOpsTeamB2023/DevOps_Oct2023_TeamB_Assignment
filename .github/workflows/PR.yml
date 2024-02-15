@@ -112,7 +112,7 @@ jobs:
       - name: Prepare Files
         id: issue_body
         run: |
-          for file in ${ALL_CHANGED_FILES}; do
+          for file in "${ALL_CHANGED_FILES}"; do
             COMMENTBODY="${file} - [Code Change](${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }}/$file)\n"
           done
           echo "COMMENTBODY=$COMMENTBODY" >> $GITHUB_ENV
@@ -128,7 +128,8 @@ jobs:
             **Files Changed -**
             ${{ steps.changed-markdown-files.outputs.all_changed_files }}
             ${{ steps.issue_body.outputs.commentbody }}
-            
+
+            [View File Changes on Github](https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}/files)
             [View Code on GitHub](https://github.com/${{ github.repository }}/tree/${{ github.event.pull_request.head.ref }})
             
             **Peer Comment -**
@@ -147,7 +148,6 @@ jobs:
             text: Reviewed - Change Request
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
             
-          
   Approved_Review:
     name: Approved Review
     runs-on: ubuntu-latest
@@ -161,7 +161,7 @@ jobs:
             color: '#00ff00'
             avatarUrl: https://c4.wallpaperflare.com/wallpaper/124/949/180/despicable-me-gru-despicable-me-wallpaper-preview.jpg
             description: Approved Peer Review
-            details: 'Approved peer review on PR#${{ github.event.number }}. For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.number }}'
+            details: 'Approved peer review on PR#${{ github.event.pull_request.number }}. For more details: https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
             text: Reviewed - Approved
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
             
@@ -190,6 +190,6 @@ jobs:
             color: '#00ff00'
             avatarUrl: https://c4.wallpaperflare.com/wallpaper/124/949/180/despicable-me-gru-despicable-me-wallpaper-preview.jpg
             description: Merged PR#${{ github.event.pull_request.number }}
-            details: 'https://github.com/${{ github.repository }}/pull/${{ github.pull_request.number }}'
+            details: 'https://github.com/${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
             footer: By ${{ github.event.pull_request.user.login }}
             webhookUrl: ${{ secrets.PR_DISCORD_WEBHOOK_URL }}
