@@ -810,37 +810,236 @@ func TestDeleteAccHandler(t *testing.T) {
 	}
 }
 
+func TestListAllAccsHandler(t *testing.T) {
+	// Create a new mock database connection
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	// Replace the actual database connection with the mock
+	SetDB(db)
+
+	// Set up expected database query and result for success
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT AccID, Username, AccType, AccStatus FROM Account")).
+		WillReturnRows(sqlmock.NewRows([]string{"AccID", "Username", "AccType", "AccStatus"}).
+			AddRow(1, "user1", "Type1", "Status1").
+			AddRow(2, "user2", "Type2", "Status2"))
+
+	req, err := http.NewRequest("GET", "/api/v1/accounts", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	// Call the handler
+	ListAllAccsHandler(rr, req)
+
+	// Check the status code for success case
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	// Verify that the expectations for success were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestListAllAccsHandler_Error(t *testing.T) {
+	// Create a new mock database connection
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	// Replace the actual database connection with the mock
+	SetDB(db)
+
+	// Set up expected database query and result for error
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT AccID, Username, AccType, AccStatus FROM Account")).
+		WillReturnError(errors.New("database error"))
+
+	req, err := http.NewRequest("GET", "/api/v1/accounts", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	// Call the handler
+	ListAllAccsHandler(rr, req)
+
+	// Check the status code for error case
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+
+	// Verify that the expectations for error were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestGetSpecificAccHandler(t *testing.T) {
+	// Create a new mock database connection
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	// Replace the actual database connection with the mock
+	SetDB(db)
+
+	// Set up expected database query and result for success
+	mock.ExpectQuery("SELECT * FROM Account WHERE AccID = ?").
+		WithArgs("1").
+		WillReturnRows(sqlmock.NewRows([]string{"AccID", "Username", "Password", "AccType", "AccStatus"}).
+			AddRow(1, "user1", "password1", "Type1", "Status1"))
+
+	req, err := http.NewRequest("GET", "/api/v1/accounts?accID=1", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	// Call the handler
+	GetSpecificAccHandler(rr, req)
+
+	// Check the status code for success case
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+}
+
 // not working - request not passing to account.go
-// func TestUpdateAccHandler(t *testing.T) {
-// 	// accID follows existing account for update with AccID=2005 in record_db for testing update
-// 	accID := "2005"
+func TestUpdateAccHandler_Success(t *testing.T) {
+	// Create a new mock database connection
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
 
-// 	// Create a request with a JSON payload for updating the account
-// 	updatedAcc := Account{
-// 		Username: "testupdatepass",
-// 		AccType:  "Admin",
-// 	}
-// 	payload, err := json.Marshal(updatedAcc)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	// Replace the actual database connection with the mock
+	SetDB(db)
 
-// 	req, err := http.NewRequest("PUT", fmt.Sprintf("/api/v1/accounts/%s", accID), bytes.NewBuffer(payload))
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+	// Prepare mock for successful update
+	mock.ExpectPrepare("UPDATE Account SET Username=?, AccType=? WHERE AccID=?").
+		ExpectExec().
+		WithArgs("newUsername", "newAccType", 123).
+		WillReturnResult(sqlmock.NewResult(0, 1))
 
-// 	rr := httptest.NewRecorder()
+	// Prepare request with valid payload and account ID
+	reqBody := `{"Username": "newUsername", "AccType": "newAccType"}`
+	req, err := http.NewRequest("PUT", "/api/v1/accounts/123", strings.NewReader(reqBody))
+	if err != nil {
+		t.Fatal(err)
+	}
 
-// 	UpdateAccHandler(rr, req)
+	rr := httptest.NewRecorder()
 
-// 	if status := rr.Code; status != http.StatusAccepted {
-// 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusAccepted)
-// 	}
+	// Call the handler
+	UpdateAccHandler(rr, req)
 
-// 	// Check the response body
-// 	expected := "Account updated successfully!\n"
-// 	if rr.Body.String() != expected {
-// 		t.Errorf("Handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
-// 	}
-// }
+	// Check the response status code for success
+	if status := rr.Code; status != http.StatusAccepted {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusAccepted)
+	}
+
+	// Check the response body
+	expectedBody := "Account updated successfully!\n"
+	if rr.Body.String() != expectedBody {
+		t.Errorf("Handler returned unexpected body: got %v want %v", rr.Body.String(), expectedBody)
+	}
+
+	// Verify that the expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestUpdateAccHandler_InvalidID(t *testing.T) {
+	// Prepare request with invalid account ID
+	req, err := http.NewRequest("PUT", "/api/v1/accounts/invalidID", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	// Call the handler with invalid ID
+	UpdateAccHandler(rr, req)
+
+	// Check the response status code for invalid ID
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	}
+	// Check the response body for invalid ID
+	expectedBody := "Invalid Account ID\n"
+	if rr.Body.String() != expectedBody {
+		t.Errorf("Handler returned unexpected body: got %v want %v", rr.Body.String(), expectedBody)
+	}
+}
+
+func TestUpdateAccHandler_InvalidPayload(t *testing.T) {
+	// Prepare request with invalid payload
+	req, err := http.NewRequest("PUT", "/api/v1/accounts/123", strings.NewReader("invalid payload"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	// Call the handler with invalid payload
+	UpdateAccHandler(rr, req)
+
+	// Check the response status code for invalid payload
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	}
+	// Check the response body for invalid payload
+	expectedBody := "Invalid request payload\n"
+	if rr.Body.String() != expectedBody {
+		t.Errorf("Handler returned unexpected body: got %v want %v", rr.Body.String(), expectedBody)
+	}
+}
+
+func TestUpdateAccHandler_InternalServerError(t *testing.T) {
+	// Create a new mock database connection
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	// Replace the actual database connection with the mock
+	SetDB(db)
+
+	// Prepare mock for internal server error
+	mock.ExpectPrepare("UPDATE Account SET Username=?, AccType=? WHERE AccID=?").
+		ExpectExec().
+		WillReturnError(errors.New("database error"))
+
+	// Prepare request with valid payload and account ID
+	reqBody := `{"Username": "newUsername", "AccType": "newAccType"}`
+	req, err := http.NewRequest("PUT", "/api/v1/accounts/123", strings.NewReader(reqBody))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	// Call the handler
+	UpdateAccHandler(rr, req)
+
+	// Check the response status code for internal server error
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+}
