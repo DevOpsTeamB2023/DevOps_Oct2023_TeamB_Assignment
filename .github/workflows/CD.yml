@@ -91,6 +91,18 @@ jobs:
     if: ${{ success() }}
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout Assignment Repository 
+      uses: actions/checkout@v4
+      with:
+        repository: DevOpsTeamB2023/DevOps_Oct2023_TeamB_Assignment
+
+    - name: Go setup 
+      uses: actions/setup-go@v5
+      with:
+        go-version: 'stable'
+    - name: run go 
+      run: go run console/console.go
+
     - name: Checkout Testing Repository
       uses: actions/checkout@v2
       with:
