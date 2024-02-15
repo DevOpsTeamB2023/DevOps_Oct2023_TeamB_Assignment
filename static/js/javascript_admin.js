@@ -27,7 +27,7 @@ function createCapstone() {
     //FORM VALUES
     const name = form.elements['captone_name'].value;
     const roleOfContact = document.querySelector('input[name="flexRadioDefault"]:checked').value;
-    const noOfStudents = form.elements['captone_noStudent'].value;
+    const noOfStudents = parseInt(form.elements['captone_noStudent'].value);
     const acadYr = form.elements['captone_academicYear'].value;
     const capstoneTitle = form.elements['captone_capstonetitle'].value;
     const companyName = form.elements['captone_companyName'].value;
@@ -45,12 +45,12 @@ function createCapstone() {
     console.log(companyContact);
     console.log(projDesc);
 
-    const curl = 'http://localhost:5002/api/v1/records';
+    const curl = `http://localhost:5002/api/v1/records`;
     console.log(curl);
 
     request.open("POST", curl);
 
-    const newcapstoneJSON = JSON.stringify ({
+    request.send(JSON.stringify ({
         "name": name,
         "roleOfContact": roleOfContact,
         "noOfStudents": noOfStudents,
@@ -59,30 +59,11 @@ function createCapstone() {
         "companyName": companyName,
         "companyContact": companyContact,
         "projDesc": projDesc,
-    });
+    }));
 
-    console.log(newcapstoneJSON);
-
-    request.send(newcapstoneJSON);
-
-    const reqStatus = request.status;
-    console.log(reqStatus)
-    
-    if(reqStatus == 0) {
-        alert("Capstone record is not created.");
-    } else if (reqStatus == 200) {
-        alert("Capstone record created successfully.")
-    } else if (reqStatus == 400) {
-        const errorData = JSON.parse(request.responseText);
-        alert("Error creating capstone: " + errorData.message);
-    } else if (reqStatus == 404) {
-        alert("Endpoint not found.");
-    } else {
-        alert("An error occured, please try again later.");
-    }
-
+    console.log("Request Status: ", request.status);
+    alert("Capstone record is created.")
     form.reset();
-    window.location.href="../templates/admin_main.html";
 
 }
 
