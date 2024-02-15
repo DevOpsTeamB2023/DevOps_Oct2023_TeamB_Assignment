@@ -125,18 +125,10 @@ function listCapstones() {
 }
 
 function queryCapstone() {
-    var request = new XMLHttpRequest();
     const form = document.getElementById('querycapstone');
+    const querySearch = form.elements['query_search'].value;
 
-    const curl = 'http://localhost:5001/api/v1/records/search';
-
-    //HTML VALUE 
-    const queryacadYr = form.elements['query_acadYr'].value;
-    const queryKeyword = form.elements['query_keyword'].value;
-
-    //CHECK
-    console.log(queryacadYr);
-    console.log(queryKeyword);
-
-    
+    // Redirect to the query_result.html page with the search query as a URL parameter
+    window.location.href = `manage_capstone.html?query=${querySearch}`;
 }
+
