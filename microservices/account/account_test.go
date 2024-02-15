@@ -14,6 +14,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-sql-driver/mysql"
+	"github.com/gorilla/mux"
 )
 
 func TestCreateAccHandler(t *testing.T) {
@@ -917,7 +918,6 @@ func TestGetSpecificAccHandler(t *testing.T) {
 	}
 }
 
-// not working - request not passing to account.go
 func TestUpdateAccHandler_Success(t *testing.T) {
 	// Create a new mock database connection
 	db, mock, err := sqlmock.New()
@@ -930,10 +930,14 @@ func TestUpdateAccHandler_Success(t *testing.T) {
 	SetDB(db)
 
 	// Prepare mock for successful update
-	mock.ExpectPrepare("UPDATE Account SET Username=?, AccType=? WHERE AccID=?").
+	mock.ExpectPrepare(regexp.QuoteMeta("UPDATE Account SET Username=?, AccType=? WHERE AccID=?")).
 		ExpectExec().
 		WithArgs("newUsername", "newAccType", 123).
 		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	// Create a new mux router
+	router := mux.NewRouter()
+	router.HandleFunc("/api/v1/accounts/{accID}", UpdateAccHandler)
 
 	// Prepare request with valid payload and account ID
 	reqBody := `{"Username": "newUsername", "AccType": "newAccType"}`
@@ -944,8 +948,8 @@ func TestUpdateAccHandler_Success(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 
-	// Call the handler
-	UpdateAccHandler(rr, req)
+	// Serve the request using the router
+	router.ServeHTTP(rr, req)
 
 	// Check the response status code for success
 	if status := rr.Code; status != http.StatusAccepted {
@@ -988,16 +992,24 @@ func TestUpdateAccHandler_InvalidID(t *testing.T) {
 }
 
 func TestUpdateAccHandler_InvalidPayload(t *testing.T) {
-	// Prepare request with invalid payload
-	req, err := http.NewRequest("PUT", "/api/v1/accounts/123", strings.NewReader("invalid payload"))
+	// Create a new mux router
+	router := mux.NewRouter()
+	router.HandleFunc("/api/v1/accounts/{accID}", UpdateAccHandler)
+
+	// Prepare request with invalid payload and account ID
+	payload, err := json.Marshal("updateAcc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	req, err := http.NewRequest("PUT", "/api/v1/accounts/123", bytes.NewBuffer(payload))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	rr := httptest.NewRecorder()
 
-	// Call the handler with invalid payload
-	UpdateAccHandler(rr, req)
+	// Serve the request using the router
+	router.ServeHTTP(rr, req)
 
 	// Check the response status code for invalid payload
 	if status := rr.Code; status != http.StatusBadRequest {
@@ -1010,7 +1022,7 @@ func TestUpdateAccHandler_InvalidPayload(t *testing.T) {
 	}
 }
 
-func TestUpdateAccHandler_InternalServerError(t *testing.T) {
+func TestUpdateAccHandler_Prepare(t *testing.T) {
 	// Create a new mock database connection
 	db, mock, err := sqlmock.New()
 	if err != nil {
@@ -1018,13 +1030,21 @@ func TestUpdateAccHandler_InternalServerError(t *testing.T) {
 	}
 	defer db.Close()
 
+	// Create a mock MySQL error
+	mockError := &mysql.MySQLError{
+		Number:  1062,                                      // MySQL error number (example)
+		Message: "Duplicate entry 'xyz' for key 'PRIMARY'", // MySQL error message (example)
+	}
+
 	// Replace the actual database connection with the mock
 	SetDB(db)
 
-	// Prepare mock for internal server error
-	mock.ExpectPrepare("UPDATE Account SET Username=?, AccType=? WHERE AccID=?").
-		ExpectExec().
-		WillReturnError(errors.New("database error"))
+	// Prepare mock for successful update
+	mock.ExpectPrepare(regexp.QuoteMeta("UPDATE Account SET Username=?, AccType=? WHERE AccID=?")).WillReturnError(mockError)
+
+	// Create a new mux router
+	router := mux.NewRouter()
+	router.HandleFunc("/api/v1/accounts/{accID}", UpdateAccHandler)
 
 	// Prepare request with valid payload and account ID
 	reqBody := `{"Username": "newUsername", "AccType": "newAccType"}`
@@ -1035,11 +1055,63 @@ func TestUpdateAccHandler_InternalServerError(t *testing.T) {
 
 	rr := httptest.NewRecorder()
 
-	// Call the handler
-	UpdateAccHandler(rr, req)
+	// Serve the request using the router
+	router.ServeHTTP(rr, req)
 
-	// Check the response status code for internal server error
+	// Check the status code
 	if status := rr.Code; status != http.StatusInternalServerError {
 		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusInternalServerError)
+	}
+}
+
+func TestUpdateAccHandler_Exec(t *testing.T) {
+	// Create a new instance of sqlmock
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("an error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	// Replace your existing db with the mocked one
+	SetDB(db)
+
+	// Create a mock MySQL error
+	mockError := &mysql.MySQLError{
+		Number:  1062,                                      // MySQL error number (example)
+		Message: "Duplicate entry 'xyz' for key 'PRIMARY'", // MySQL error message (example)
+	}
+
+	// Set up expectations for your query
+	mock.ExpectPrepare(regexp.QuoteMeta("UPDATE Account SET Username=?, AccType=? WHERE AccID=?")).ExpectExec().
+		WithArgs("yiting", "Admin", 1).
+		WillReturnError(mockError)
+
+	// Create a new mux router
+	router := mux.NewRouter()
+	router.HandleFunc("/api/v1/accounts/{accID}", UpdateAccHandler)
+
+	// Prepare request with valid payload and account ID
+	reqBody := `{"Username": "newUsername", "AccType": "newAccType"}`
+	req, err := http.NewRequest("PUT", "/api/v1/accounts/123", strings.NewReader(reqBody))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	// Serve the request using the router
+	router.ServeHTTP(rr, req)
+
+	// Check the response status code
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusInternalServerError)
+	}
+
+	// Check the response body
+	expectedBody := "Internal server error\n"
+	if rr.Body.String() != expectedBody {
+		t.Errorf("handler returned unexpected body: got %v want %v",
+			rr.Body.String(), expectedBody)
 	}
 }
