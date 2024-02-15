@@ -1,0 +1,28 @@
+:root{
+    --green: #198753;
+}
+
+a.navbar-brand,
+a:link.navbar-brand,
+a:visited.navbar-brand,
+a:active.navbar-brand {
+    text-decoration: none;
+    font-weight: bold;
+    color: var(--green);
+
+}
+
+.page {
+    margin-top: 10rem;
+}
+
+.page h1 {
+    font-family: 'Times New Roman', Times, serif;
+    text-decoration: underline;
+    font-size: 4rem;
+    text-align: center;
+}
+
+.page label{
+    font-weight: bold;
+}
