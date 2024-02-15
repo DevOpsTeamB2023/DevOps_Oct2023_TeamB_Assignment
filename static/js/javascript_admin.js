@@ -84,3 +84,20 @@ function createCapstone() {
     form.reset();
 
 }
+
+function queryCapstone() {
+    var request = new XMLHttpRequest();
+    const form = document.getElementById('querycapstone');
+
+    const curl = 'http://localhost:5001/api/v1/records/search';
+
+    //HTML VALUE 
+    const queryacadYr = form.elements['query_acadYr'].value;
+    const queryKeyword = form.elements['query_keyword'].value;
+
+    //CHECK
+    console.log(queryacadYr);
+    console.log(queryKeyword);
+
+    
+}

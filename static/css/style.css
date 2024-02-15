@@ -16,6 +16,13 @@ a:active.navbar-brand {
     margin-top: 10rem;
 }
 
+.page h1 {
+    font-family: 'Times New Roman', Times, serif;
+    text-decoration: underline;
+    font-size: 4rem;
+    text-align: center;
+}
+
 .page label{
     font-weight: bold;
 }
