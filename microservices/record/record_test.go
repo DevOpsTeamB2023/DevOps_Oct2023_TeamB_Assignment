@@ -14,6 +14,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/go-sql-driver/mysql"
+	"github.com/gorilla/mux"
 )
 
 func TestDeleteRecordHandler(t *testing.T) {
@@ -383,6 +384,63 @@ func TestCreateRecordHandler_ErrorPreparingStatement(t *testing.T) {
 
 	// Check the response body
 	expectedBody := "Internal server error\n"
+	if rr.Body.String() != expectedBody {
+		t.Errorf("Handler returned unexpected body: got %v want %v", rr.Body.String(), expectedBody)
+	}
+
+	// Verify that the expectations were met
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("there were unfulfilled expectations: %s", err)
+	}
+}
+
+func TestUpdateRecordHandler_Success(t *testing.T) {
+	// Create a new mock database connection
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+
+	// Replace the actual database connection with the mock
+	SetDB(db)
+
+	// Prepare mock for successful update
+	mock.ExpectPrepare(regexp.QuoteMeta("UPDATE Record SET Name=?, RoleOfContact=?, NoOfStudents=?, AcadYr=?, CapstoneTitle=?, CompanyName=?, CompanyContact=?, ProjDesc=? WHERE RecordID=?")).
+		ExpectExec().
+		WithArgs("newName", "Student", 1, "newAcadYr", "newCapstoneTitle", "newCompanyName", "newCompanyContact", "newProjDesc", 123).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+
+	// Create a new mux router
+	router := mux.NewRouter()
+	router.HandleFunc("/api/v1/records/{recordID}", UpdateRecordHandler)
+
+	// Prepare request with valid payload and record ID
+	reqBody := `{"Name": "newName", 
+				"RoleOfContact": "Student",
+				"NoOfStudents" : 1, 
+				"AcadYr": "newAcadYr", 
+				"CapstoneTitle" : "newCapstoneTitle", 
+				"CompanyName" : "newCompanyName", 
+				"CompanyContact" : "newCompanyContact", 
+				"ProjDesc" : "newProjDesc"}`
+	req, err := http.NewRequest("PUT", "/api/v1/records/123", strings.NewReader(reqBody))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr := httptest.NewRecorder()
+
+	// Serve the request using the router
+	router.ServeHTTP(rr, req)
+
+	// Check the response status code for success
+	if status := rr.Code; status != http.StatusAccepted {
+		t.Errorf("Handler returned wrong status code: got %v want %v", status, http.StatusAccepted)
+	}
+
+	// Check the response body
+	expectedBody := "Record updated successfully!\n"
 	if rr.Body.String() != expectedBody {
 		t.Errorf("Handler returned unexpected body: got %v want %v", rr.Body.String(), expectedBody)
 	}
