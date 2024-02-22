@@ -1,0 +1,325 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>record: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">DevOps_Oct2023_TeamB_Assignment/microservices/record/record.go (53.7%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package record
+
+import (
+        "database/sql"
+        "encoding/json"
+        "fmt"
+        "log"
+        "net/http"
+        "strconv"
+
+        _ "github.com/go-sql-driver/mysql"
+        "github.com/gorilla/mux"
+)
+
+type Record struct {
+        RecordID       int    `json:"recordId"`
+        Name           string `json:"name"`
+        RoleOfContact  string `json:"roleOfContact"`
+        NoOfStudents   int    `json:"noOfStudents"`
+        AcadYr         string `json:"acadYr"`
+        CapstoneTitle  string `json:"capstoneTitle"`
+        CompanyName    string `json:"companyName"`
+        CompanyContact string `json:"companyContact"`
+        ProjDesc       string `json:"projDesc"`
+}
+
+var (
+        db  *sql.DB
+        err error
+)
+
+func SetDB(database *sql.DB) <span class="cov8" title="1">{
+        db = database
+}</span>
+
+func DB() <span class="cov0" title="0">{
+        db, err = sql.Open("mysql", "record_system:dopasgpwd@tcp(127.0.0.1:3306)/record_db")
+        if err != nil </span><span class="cov0" title="0">{
+                log.Fatal(err)
+        }</span>
+
+        <span class="cov0" title="0">if err := db.Ping(); err != nil </span><span class="cov0" title="0">{
+                log.Fatal(err)
+        }</span>
+
+        <span class="cov0" title="0">fmt.Println("Connected to the database")</span>
+}
+
+func InitHTTPServer() <span class="cov0" title="0">{
+        DB()
+
+        router := mux.NewRouter()
+        router.Use(corsMiddleware)
+
+        router.HandleFunc("/api/v1/records/all", ListAllRecordsHandler).Methods("GET")
+        router.HandleFunc("/api/v1/records", CreateRecordHandler).Methods("POST")
+        router.HandleFunc("/api/v1/records/delete", DeleteRecordHandler).Methods("DELETE")
+        router.HandleFunc("/api/v1/records/{recordID}", UpdateRecordHandler).Methods("PUT")
+        router.HandleFunc("/api/v1/records/search", QueryRecordHandler).Methods("GET")
+
+        fmt.Println("Listening at port 5002")
+        go func() </span><span class="cov0" title="0">{
+                log.Fatal(http.ListenAndServe(":5002", router))
+        }</span>()
+}
+
+func corsMiddleware(next http.Handler) http.Handler <span class="cov0" title="0">{
+        return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) </span><span class="cov0" title="0">{
+                w.Header().Set("Access-Control-Allow-Origin", "*")
+                w.Header().Set("Access-Control-Allow-Methods", "POST, PUT, PATCH, GET, DELETE, OPTIONS")
+                w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Api-Key, X-Requested-With, Content-Type, Accept, Authorization")
+                next.ServeHTTP(w, r)
+        }</span>)
+}
+
+// gets and lists all capstone records
+func ListAllRecordsHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        rows, err := db.Query("SELECT RecordID, Name, RoleOfContact, NoOfStudents, AcadYr, CapstoneTitle, CompanyName, CompanyContact, ProjDesc FROM Record")
+        if err != nil </span><span class="cov8" title="1">{
+                http.Error(w, "Internal server error", http.StatusInternalServerError)
+                return
+        }</span>
+        <span class="cov8" title="1">defer rows.Close()
+
+        var records []Record
+        for rows.Next() </span><span class="cov8" title="1">{
+                var record Record
+                err := rows.Scan(&amp;record.RecordID, &amp;record.Name, &amp;record.RoleOfContact, &amp;record.NoOfStudents, &amp;record.AcadYr, &amp;record.CapstoneTitle, &amp;record.CompanyName, &amp;record.CompanyContact, &amp;record.ProjDesc)
+                if err != nil </span><span class="cov0" title="0">{
+                        http.Error(w, "Internal server error", http.StatusInternalServerError)
+                        return
+                }</span>
+                <span class="cov8" title="1">records = append(records, record)</span>
+        }
+
+        // Respond with the list of records
+        <span class="cov8" title="1">w.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(w).Encode(records)</span>
+}
+
+// create a capstone record
+func CreateRecordHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        var newRecord Record
+        err := json.NewDecoder(r.Body).Decode(&amp;newRecord)
+        if err != nil </span><span class="cov8" title="1">{
+                http.Error(w, "Invalid request payload", http.StatusBadRequest)
+                return
+        }</span>
+
+        // Insert the new record into the database
+        <span class="cov8" title="1">stmt, err := db.Prepare("INSERT INTO Record (Name, RoleOfContact, NoOfStudents, AcadYr, CapstoneTitle, CompanyName, CompanyContact, ProjDesc) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+        if err != nil </span><span class="cov8" title="1">{
+                http.Error(w, "Internal server error", http.StatusInternalServerError)
+                return
+        }</span>
+        <span class="cov8" title="1">defer stmt.Close()
+
+        _, err = stmt.Exec(newRecord.Name, newRecord.RoleOfContact, newRecord.NoOfStudents, newRecord.AcadYr, newRecord.CapstoneTitle, newRecord.CompanyName, newRecord.CompanyContact, newRecord.ProjDesc)
+        if err != nil </span><span class="cov8" title="1">{
+                http.Error(w, "Internal server error", http.StatusInternalServerError)
+                return
+        }</span>
+
+        <span class="cov8" title="1">w.WriteHeader(http.StatusCreated)
+        fmt.Fprintln(w, "Record created successfully")</span>
+}
+
+func DeleteRecordHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        // Parse the record ID from the request parameters
+        recordID := r.URL.Query().Get("recordID")
+        if recordID == "" </span><span class="cov8" title="1">{
+                http.Error(w, "Record ID parameter is required", http.StatusBadRequest)
+                return
+        }</span>
+
+        // Delete the record from the database
+        <span class="cov8" title="1">stmt, err := db.Prepare("DELETE FROM Record WHERE RecordID = ?")
+        if err != nil </span><span class="cov8" title="1">{
+                http.Error(w, "Internal server error", http.StatusInternalServerError)
+                return
+        }</span>
+        <span class="cov8" title="1">defer stmt.Close()
+
+        _, err = stmt.Exec(recordID)
+        if err != nil </span><span class="cov8" title="1">{
+                http.Error(w, "Internal server error", http.StatusInternalServerError)
+                return
+        }</span>
+
+        <span class="cov8" title="1">w.WriteHeader(http.StatusOK)
+        fmt.Fprintln(w, "Record deleted successfully")</span>
+}
+
+func UpdateRecordHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        // Parse the record ID from the request URL
+        vars := mux.Vars(r)
+        recordID, err := strconv.Atoi(vars["recordID"])
+        if err != nil </span><span class="cov0" title="0">{
+                http.Error(w, "Invalid record ID", http.StatusBadRequest)
+                return
+        }</span>
+
+        <span class="cov8" title="1">var updatedRecord Record
+        err = json.NewDecoder(r.Body).Decode(&amp;updatedRecord)
+        if err != nil </span><span class="cov0" title="0">{
+                http.Error(w, "Invalid request payload", http.StatusBadRequest)
+                return
+        }</span>
+
+        // Update the record's information in the database
+        <span class="cov8" title="1">stmt, err := db.Prepare("UPDATE Record SET Name=?, RoleOfContact=?, NoOfStudents=?, AcadYr=?, CapstoneTitle=?, CompanyName=?, CompanyContact=?, ProjDesc=? WHERE RecordID=?")
+        if err != nil </span><span class="cov0" title="0">{
+                http.Error(w, "Internal server error", http.StatusInternalServerError)
+                return
+        }</span>
+        <span class="cov8" title="1">defer stmt.Close()
+
+        _, err = stmt.Exec(updatedRecord.Name, updatedRecord.RoleOfContact, updatedRecord.NoOfStudents, updatedRecord.AcadYr, updatedRecord.CapstoneTitle, updatedRecord.CompanyName, updatedRecord.CompanyContact, updatedRecord.ProjDesc, recordID)
+        if err != nil </span><span class="cov0" title="0">{
+                http.Error(w, "Internal server error", http.StatusInternalServerError)
+                return
+        }</span>
+
+        <span class="cov8" title="1">w.WriteHeader(http.StatusAccepted)
+        fmt.Fprintln(w, "Record updated successfully!")</span>
+}
+
+func QueryRecordHandler(w http.ResponseWriter, r *http.Request) <span class="cov0" title="0">{
+        // Parse the capstoneTitle from the query parameters
+        query := r.URL.Query().Get("query")
+
+        // Query the database to search for trips based on the acadYr
+        rows, err := db.Query("SELECT RecordID, Name, RoleOfContact, NoOfStudents, AcadYr, CapstoneTitle, CompanyName, CompanyContact, ProjDesc FROM Record WHERE AcadYr LIKE ? OR CapstoneTitle LIKE ?", "%"+query+"%", "%"+query+"%")
+        if err != nil </span><span class="cov0" title="0">{
+                http.Error(w, "Internal server error", http.StatusInternalServerError)
+                return
+        }</span>
+        <span class="cov0" title="0">defer rows.Close()
+
+        // Create a slice to store the search results
+        var searchResults []Record
+
+        // Iterate through the rows and populate the search results slice
+        for rows.Next() </span><span class="cov0" title="0">{
+                var record Record
+                if err := rows.Scan(&amp;record.RecordID, &amp;record.Name, &amp;record.RoleOfContact, &amp;record.NoOfStudents, &amp;record.AcadYr, &amp;record.CapstoneTitle, &amp;record.CompanyName, &amp;record.CompanyContact, &amp;record.ProjDesc); err != nil </span><span class="cov0" title="0">{
+                        http.Error(w, "Internal server error", http.StatusInternalServerError)
+                        return
+                }</span>
+                <span class="cov0" title="0">searchResults = append(searchResults, record)</span>
+        }
+
+        // Check for errors during row iteration
+        <span class="cov0" title="0">if err := rows.Err(); err != nil </span><span class="cov0" title="0">{
+                http.Error(w, "Internal server error", http.StatusInternalServerError)
+                return
+        }</span>
+
+        // Encode the search results as JSON and send the response
+        <span class="cov0" title="0">w.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(w).Encode(searchResults)</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

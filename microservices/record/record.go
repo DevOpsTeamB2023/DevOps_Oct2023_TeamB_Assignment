@@ -185,42 +185,6 @@ func UpdateRecordHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Record updated successfully!")
 }
 
-func QueryRecordByAcadYrHandler(w http.ResponseWriter, r *http.Request) {
-	// Parse the acadYr from the query parameters
-	acadYr := r.URL.Query().Get("acadYr")
-
-	// Query the database to search for trips based on the acadYr
-	rows, err := db.Query("SELECT RecordID, Name, RoleOfContact, NoOfStudents, AcadYr, CapstoneTitle, CompanyName, CompanyContact, ProjDesc FROM Record WHERE AcadYr LIKE ?", "%"+acadYr+"%")
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-	defer rows.Close()
-
-	// Create a slice to store the search results
-	var searchResults []Record
-
-	// Iterate through the rows and populate the search results slice
-	for rows.Next() {
-		var record Record
-		if err := rows.Scan(&record.RecordID, &record.Name, &record.RoleOfContact, &record.NoOfStudents, &record.AcadYr, &record.CapstoneTitle, &record.CompanyName, &record.CompanyContact, &record.ProjDesc); err != nil {
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-			return
-		}
-		searchResults = append(searchResults, record)
-	}
-
-	// Check for errors during row iteration
-	if err := rows.Err(); err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	// Encode the search results as JSON and send the response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(searchResults)
-}
-
 func QueryRecordHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse the capstoneTitle from the query parameters
 	query := r.URL.Query().Get("query")
